@@ -14,10 +14,10 @@ from glue.core.data_combo_helper import ComponentIDComboHelper
 from glue.utils import defer_draw, datetime64_to_mpl
 from glue.utils.decorators import avoid_circular
 
-__all__ = ['HistogramViewerState', 'HistogramLayerState']
+__all__ = ['MapViewerState', 'MapLayerState']
 
 
-class HistogramViewerState(MatplotlibDataViewerState):
+class MapViewerState(MatplotlibDataViewerState):
     """
     A state class that includes all the attributes for a histogram viewer.
     """
@@ -40,7 +40,7 @@ class HistogramViewerState(MatplotlibDataViewerState):
 
     def __init__(self, **kwargs):
 
-        super(HistogramViewerState, self).__init__()
+        super(MapViewerState, self).__init__()
 
         self.hist_helper = StateAttributeHistogramHelper(self, 'x_att', lower='hist_x_min',
                                                          upper='hist_x_max', n_bin='hist_n_bin',
@@ -190,7 +190,7 @@ class HistogramViewerState(MatplotlibDataViewerState):
         self.x_att_helper.set_multiple_data(self.layers_data)
 
 
-class HistogramLayerState(MatplotlibLayerState):
+class MapLayerState(MatplotlibLayerState):
     """
     A state class that includes all the attributes for layers in a histogram plot.
     """

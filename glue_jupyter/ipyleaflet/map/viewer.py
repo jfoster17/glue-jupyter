@@ -1,28 +1,28 @@
 from glue.core.subset import roi_to_subset_state
 from glue.core.roi import RangeROI
-from .state import HistogramViewerState
+from .state import MapViewerState
 
-from ..common.viewer import BqplotBaseView
+from ..common.viewer import IpyLeafletBaseView
 
-from .layer_artist import BqplotSimpleHistogramLayerArtist
+from .layer_artist import IPyLeafletMapLayerArtist
 from glue_jupyter.common.state_widgets.layer_histogram import HistogramLayerStateWidget
 from glue_jupyter.common.state_widgets.viewer_histogram import HistogramViewerStateWidget
 
-__all__ = ['BqplotSimpleHistogramView']
+__all__ = ['IPyLeafletMapView']
 
 
-class BqplotSimpleHistogramView(BqplotBaseView):
+class IPyLeafletMapView(IpyLeafletBaseView):
 
     allow_duplicate_data = False
     allow_duplicate_subset = False
     large_data_size = 1e5
     is2d = False
 
-    _state_cls = HistogramViewerState
-    _options_cls = HistogramViewerStateWidget
-    _data_artist_cls = BqplotSimpleHistogramLayerArtist
-    _subset_artist_cls = BqplotSimpleHistogramLayerArtist
-    _layer_style_widget_cls = HistogramLayerStateWidget
+    _state_cls = MapViewerState
+    _options_cls = HistogramViewerStateWidget #Need a new one of these
+    _data_artist_cls = IPyLeafletMapLayerArtist
+    _subset_artist_cls = IPyLeafletMapLayerArtist
+    _layer_style_widget_cls = HistogramLayerStateWidget #Need a new one of these
 
     tools = ['bqplot:home', 'bqplot:panzoom', 'bqplot:xrange']
 

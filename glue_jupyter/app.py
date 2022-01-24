@@ -196,12 +196,12 @@ class JupyterApplication(Application):
         view.layers[0].state.update_from_dict(layer_state)
         return view
 
-    def simplehistogram1d(self, *, data=None, x=None, widget='bqplot', color=None,
+    def map(self, *, data=None, x=None, widget='bqplot', color=None,
         x_min=None, x_max=None, n_bin=None, normalize=False,
         cumulative=False, viewer_state=None, layer_state=None,
         show=True):
-        from .bqplot.simplehistogram import BqplotSimpleHistogramView
-        viewer_cls = BqplotSimpleHistogramView
+        from .ipyleaflet.map import IPyLeafletMapView
+        viewer_cls = IPyLeafletMapView
         
         data = validate_data_argument(self.data_collection, data)
         

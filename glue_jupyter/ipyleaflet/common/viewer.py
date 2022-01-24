@@ -14,10 +14,10 @@ from .tools import ROIClickAndDrag
 
 
 import ipyleaflet
-__all__ = ['BqplotBaseView']
+__all__ = ['IpyLeafletBaseView']
 
 
-class BqplotBaseView(IPyWidgetView):
+class IpyLeafletBaseView(IPyWidgetView):
 
     allow_duplicate_data = False
     allow_duplicate_subset = False
@@ -40,6 +40,8 @@ class BqplotBaseView(IPyWidgetView):
                                     axes=[self.axis_x, self.axis_y],
                                     fig_margin={'left': 60, 'bottom': 60, 'top': 10, 'right': 10})
 
+        self.mapfigure = ipyleaflet.Map(center=(52, 10), zoom=8)
+
         self.figure.padding_y = 0
         self._fig_margin_default = self.figure.fig_margin
         self._fig_margin_zero = dict(self.figure.fig_margin)
@@ -59,7 +61,7 @@ class BqplotBaseView(IPyWidgetView):
         self.figure.interaction = self._mouse_interact
         self._events_for_callback = {}
 
-        super(BqplotBaseView, self).__init__(session, state=state)
+        super(IpyLeafletBaseView, self).__init__(session, state=state)
 
         # Remove the following two lines once glue v0.16 is required - see
         # https://github.com/glue-viz/glue/pull/2099/files for more information.
@@ -179,7 +181,7 @@ class BqplotBaseView(IPyWidgetView):
 
     @property
     def figure_widget(self):
-        return self.figure
+        return self.mapfigure
 
     def _sync_show_axes(self):
         # TODO: if moved to state, this would not rely on the widget

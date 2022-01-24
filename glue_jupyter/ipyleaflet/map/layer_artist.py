@@ -6,18 +6,18 @@ from glue.viewers.common.layer_artist import LayerArtist
 from glue.utils import color2hex
 
 from ...link import link, dlink
-from .state import HistogramLayerState
+from .state import MapLayerState
 
-__all__ = ['BqplotSimpleHistogramLayerArtist']
+__all__ = ['IPyLeafletMapLayerArtist']
 
 
-class BqplotSimpleHistogramLayerArtist(LayerArtist):
+class IPyLeafletMapLayerArtist(LayerArtist):
 
-    _layer_state_cls = HistogramLayerState
+    _layer_state_cls = MapLayerState
 
     def __init__(self, view, viewer_state, layer_state=None, layer=None):
 
-        super(BqplotSimpleHistogramLayerArtist, self).__init__(viewer_state,
+        super(IPyLeafletMapLayerArtist, self).__init__(viewer_state,
                                                          layer_state=layer_state, layer=layer)
 
         self.view = view
