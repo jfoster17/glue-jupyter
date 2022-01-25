@@ -196,27 +196,24 @@ class JupyterApplication(Application):
         view.layers[0].state.update_from_dict(layer_state)
         return view
 
-    def map(self, *, data=None, x=None, widget='bqplot', color=None,
-        x_min=None, x_max=None, n_bin=None, normalize=False,
-        cumulative=False, viewer_state=None, layer_state=None,
-        show=True):
+    def map(self, *, data=None, c=None, color=None, viewer_state=None,
+        layer_state=None,show=True):
         from .ipyleaflet.map import IPyLeafletMapView
         viewer_cls = IPyLeafletMapView
         
         data = validate_data_argument(self.data_collection, data)
         
         viewer_state_obj = viewer_cls._state_cls()
-        viewer_state_obj.x_att_helper.append_data(data)
+        viewer_state_obj.c_att_helper.append_data(data)
         viewer_state = viewer_state or {}
         
-        if x is not None:
-            viewer_state['x_att'] = data.id[x]
+        if c is not None:
+            viewer_state['c_att'] = data.id[c]
         
         # x_min and x_max get set to the hist_x_min/max in
         # glue.viewers.histogram.state for this API it make more sense to call
         # it x_min and x_max, and for consistency with the rest
-        _update_not_none(viewer_state, hist_x_min=x_min, hist_x_max=x_max, hist_n_bin=n_bin,
-                         normalize=normalize, cumulative=cumulative)
+        _update_not_none(viewer_state)
         viewer_state_obj.update_from_dict(viewer_state)
         
         view = self.new_data_viewer(viewer_cls, data=data,
