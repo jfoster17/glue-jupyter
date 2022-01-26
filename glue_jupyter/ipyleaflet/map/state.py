@@ -3,9 +3,9 @@ import numpy as np
 from glue.core import BaseData, Subset
 
 from echo import delay_callback
-from glue.viewers.matplotlib.state import (MatplotlibDataViewerState,
-                                           MatplotlibLayerState,
-                                           DeferredDrawCallbackProperty as DDCProperty,
+from glue.viewers.common.state import ViewerState, LayerState
+
+from glue.viewers.matplotlib.state import (DeferredDrawCallbackProperty as DDCProperty,
                                            DeferredDrawSelectionCallbackProperty as DDSCProperty)
 #from glue.core.state_objects import (StateAttributeLimitsHelper,
 #                                     StateAttributeHistogramHelper)
@@ -17,12 +17,15 @@ from glue.utils.decorators import avoid_circular
 __all__ = ['MapViewerState', 'MapLayerState']
 
 
-class MapViewerState(MatplotlibDataViewerState):
+class MapViewerState(ViewerState):
     """
     A state class that includes all the attributes for a map viewer.
     """
 
     c_att = DDSCProperty(docstring='The attribute to display as a choropleth')
+    lon = DDCProperty(docstring='Longitude at the center of the map')
+    lat = DDCProperty(docstring='Latitude at the center of the map')
+    zoom_level = DDCProperty(docstring='Zoom level for the map')
 
     def __init__(self, **kwargs):
 
@@ -31,7 +34,13 @@ class MapViewerState(MatplotlibDataViewerState):
         self.add_callback('layers', self._layers_changed)
 
         self.c_att_helper = ComponentIDComboHelper(self, 'c_att')
+        #print(self.c_att_helper)
+        #print(self.c_att_helper._data)
+        #import pdb; pdb.set_trace()
+        #self._viewer_state.add_callback('c_att', self._on_attribute_change)
 
+        self.c_metadata = None
+        #print(self.layers_data)
         self.update_from_dict(kwargs)
 
 
@@ -54,12 +63,24 @@ class MapViewerState(MatplotlibDataViewerState):
     @defer_draw
     def _layers_changed(self, *args):
         self.c_att_helper.set_multiple_data(self.layers_data)
+        print(self.c_att_helper)
+        print(self.c_att_helper._data)
+        self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
 
 
-class MapLayerState(MatplotlibLayerState):
+class MapLayerState(LayerState):
     """
     A state class that includes all the attributes for layers in a choropleth map.
+    
+    This should have attributes for:
+    
+    colorscale (a list of 
     """
+
+    #def __init__(self, **kwargs): #Calling this init is fubar
+    #        
+    #    super(MapLayerState, self).__init__()
+    #    #self.ids = self.layer['ids']
 
     @property
     def viewer_state(self):

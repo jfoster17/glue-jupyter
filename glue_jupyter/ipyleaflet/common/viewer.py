@@ -34,11 +34,14 @@ class IpyLeafletBaseView(IPyWidgetView):
         self._event_callbacks = CallbackContainer()
         self._events_for_callback = {}
 
-        self.scale_x = 0 #These are used throughout the toolbar things
-        self.scale_y = 0 
+        #self.scale_x = 0 #These are used throughout the toolbar things
+        #self.scale_y = 0 
         super(IpyLeafletBaseView, self).__init__(session, state=state)
 
         self.create_layout()
+
+    def get_layer_artist(self, cls, layer=None, layer_state=None):
+        return cls(self.mapfigure, self.state, layer=layer, layer_state=layer_state)
 
     def add_event_callback(self, callback, events=None):
         """
