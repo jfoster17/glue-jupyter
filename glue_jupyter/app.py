@@ -210,9 +210,6 @@ class JupyterApplication(Application):
         if c is not None:
             viewer_state['c_att'] = data.id[c]
         
-        # x_min and x_max get set to the hist_x_min/max in
-        # glue.viewers.histogram.state for this API it make more sense to call
-        # it x_min and x_max, and for consistency with the rest
         _update_not_none(viewer_state)
         viewer_state_obj.update_from_dict(viewer_state)
         

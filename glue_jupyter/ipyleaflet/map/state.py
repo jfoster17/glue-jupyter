@@ -74,7 +74,11 @@ class MapLayerState(LayerState):
     
     This should have attributes for:
     
-    colorscale (a list of 
+    colorscale (a list of available cmaps: 
+                from branca.colormap import linear for continuous
+                qualitative for categorical)
+    visible, of course
+    color_steps (whether to turn a continuous variable into a stepped display) <-- less important
     """
 
     #def __init__(self, **kwargs): #Calling this init is fubar
@@ -90,4 +94,11 @@ class MapLayerState(LayerState):
     def viewer_state(self, viewer_state):
         self._viewer_state = viewer_state
 
-
+class MapSubsetLayerState(LayerState):
+    """
+    Currently this does not do anything
+    """
+    def __init__(self, *args, **kwargs):
+    #self.uuid = str(uuid.uuid4())
+        super(MapSubsetLayerState, self).__init__(*args, **kwargs)
+    

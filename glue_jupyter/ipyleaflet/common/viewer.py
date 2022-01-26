@@ -40,6 +40,11 @@ class IpyLeafletBaseView(IPyWidgetView):
 
         self.create_layout()
 
+
+    #def get_subset_layer_artist(self, layer=None, layer_state=None):
+    #    cls = IPyLeafletMapSubsetLayerArtist
+    #   return self.get_layer_artist(cls, layer=layer, layer_state=layer_state)
+
     def get_layer_artist(self, cls, layer=None, layer_state=None):
         return cls(self.mapfigure, self.state, layer=layer, layer_state=layer_state)
 
