@@ -96,7 +96,7 @@ class PointSelect(CheckableTool):
 @viewer_tool
 class HomeTool(Tool):
 
-    tool_id = 'bqplot:home'
+    tool_id = 'ipyleaflet:home'
     icon = 'glue_home'
     action_text = 'Home'
     tool_tip = 'Reset original zoom'
