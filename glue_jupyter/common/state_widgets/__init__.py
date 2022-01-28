@@ -13,3 +13,6 @@ from .viewer_profile import *  # noqa
 
 from .layer_scatter import *  # noqa
 from .viewer_scatter import *  # noqa
+
+from .layer_map import *  # noqa
+from .viewer_map import *  # noqa
