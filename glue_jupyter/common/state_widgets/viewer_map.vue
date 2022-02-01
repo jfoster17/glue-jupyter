@@ -9,3 +9,8 @@
     module.exports = {
     }
 </script>
+<style>
+    .v-navigation-drawer {
+    z-index: 999999 !important;
+    }
+</style>
