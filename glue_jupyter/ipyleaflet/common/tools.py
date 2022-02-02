@@ -11,6 +11,8 @@ from glue.config import viewer_tool
 from glue.viewers.common.tool import Tool, CheckableTool
 import numpy as np
 
+from ipywidgets import CallbackDispatcher
+from traitlets import Instance
 __all__ = []
 
 ICON_WIDTH = 20
@@ -86,12 +88,37 @@ class PointSelect(CheckableTool):
         geo_json.on_click(on_click)
 
     def deactivate(self):
-        pass
+        geo_json = self.viewer.layers[0].layer_artist
+        geo_json._click_callbacks = CallbackDispatcher() #This removes all on_click callbacks, but seems to work
         #print(f"List of Region IDs: {list(set(self.list_of_region_ids))}") #For some reason this adds all regions twice
 
     def close(self):
         pass
 
+@viewer_tool
+class RectangleSelect(CheckableTool):
+
+    icon = 'glue_square'
+    tool_id = 'ipyleaflet:rectangleselect'
+    action_text = 'Rectangular ROI'
+    tool_tip = 'Define a rectangular region of interest'
+    status_tip = 'Define a rectangular region of interest'
+    shortcut = 'D'
+
+    def __init__(self, viewer):
+        super(RectangleSelect, self).__init__(viewer)
+        
+
+    def activate(self):
+        def on_mousedown(**kwargs):
+            print(kwargs)
+        geo_json = self.viewer.layers[0].layer_artist
+        geo_json.on_mousedown(on_mousedown)
+
+    def deactivate(self):
+        pass
+    def close(self):
+        pass
 
 
 @viewer_tool

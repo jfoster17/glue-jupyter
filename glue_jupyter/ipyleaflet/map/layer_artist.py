@@ -8,7 +8,7 @@ from glue.utils import color2hex
 from ...link import link, dlink
 from .state import MapLayerState, MapSubsetLayerState
 
-from ipyleaflet.leaflet import LayerException
+from ipyleaflet.leaflet import LayerException, LayersControl
 import ipyleaflet
 from branca.colormap import linear
 
@@ -38,9 +38,13 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                                     style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
                                     hover_style={'fillOpacity': 0.95},)
                                     #style_callback=subset_border)
+        self.layer_artist.name = str(self._viewer_state.c_att) #We will have to sync this
         self._viewer_state.add_callback('c_att', self._on_attribute_change)
         self.map = map
         self.map.add_layer(self.layer_artist)
+        control = LayersControl(position='bottomleft')
+        map.add_control(control)
+        
        #self.view = view
 
     #def subset_border()

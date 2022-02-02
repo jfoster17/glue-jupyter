@@ -26,7 +26,7 @@ class IPyLeafletMapView(IpyLeafletBaseView):
     _subset_artist_cls = IPyLeafletMapSubsetLayerArtist
     _layer_style_widget_cls = MapLayerStateWidget #Need a new one of these
 
-    tools = ['ipyleaflet:pointselect']#'bqplot:home', 'bqplot:panzoom', 'bqplot:xrange']
+    tools = ['ipyleaflet:pointselect','ipyleaflet:rectangleselect']#'bqplot:home', 'bqplot:panzoom', 'bqplot:xrange']
 
     def _roi_to_subset_state(self, roi):
         # TODO: copy paste from glue/viewers/histogram/qt/data_viewer.py
