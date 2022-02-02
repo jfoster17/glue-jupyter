@@ -90,6 +90,7 @@ class PointSelect(CheckableTool):
     def deactivate(self):
         geo_json = self.viewer.layers[0].layer_artist
         geo_json._click_callbacks = CallbackDispatcher() #This removes all on_click callbacks, but seems to work
+        self.list_of_region_ids = [] #We need to trigger this when we switch modes too (to do a new region)
         #print(f"List of Region IDs: {list(set(self.list_of_region_ids))}") #For some reason this adds all regions twice
 
     def close(self):

@@ -108,12 +108,11 @@ class IPyLeafletMapSubsetLayerArtist(LayerArtist):
 
         super(IPyLeafletMapSubsetLayerArtist, self).__init__(viewer_state,
                                                          layer_state=layer_state, layer=layer)
-
-        
         self.map = map
-        #self.map.add_layer(self.layer_artist)
-       #self.view = view
-
+        self.layer = layer
+        self.layer_state = layer_state
+        #dlink((self.state, 'color'), (self.scatter, 'colors') #Can we link the color to Geo
+        
     def redraw(self):
         """
         This is dumb -- it creates a new map layer each time we have to redraw
@@ -139,10 +138,10 @@ class IPyLeafletMapSubsetLayerArtist(LayerArtist):
                     new_features.append(feature)
             subset_json = geo_json_data.copy()
             subset_json['features'] = new_features
-            
+            #print(self.layer.style.color)
             self.subset_artist = ipyleaflet.GeoJSON(
                                         data=subset_json,
-                                        style={'fillOpacity': 0.5, 'color':'blue'},
+                                        style={'fillOpacity': 0.5, 'color':self.layer.style.color},
                                         )
                                         #style_callback=subset_border)
             if len(self.map.layers) > 2:
