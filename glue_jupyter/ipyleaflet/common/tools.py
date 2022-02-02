@@ -107,16 +107,28 @@ class RectangleSelect(CheckableTool):
 
     def __init__(self, viewer):
         super(RectangleSelect, self).__init__(viewer)
-        
+        self.start_coords = None
+        self.end_coords = None
 
     def activate(self):
-        def on_mousedown(**kwargs):
-            print(kwargs)
-        geo_json = self.viewer.layers[0].layer_artist
-        geo_json.on_mousedown(on_mousedown)
+        """
+        This gets the information we want, but we need to disable dragging and we need to 
+        draw a rectanle on the map. The DrawControl stuff in ipyleaflet does all this
+        
+        """
+        def map_interaction(**kwargs):
+            if kwargs['type'] == 'mousedown':
+                print(f'mousedown {kwargs["coordinates"]}')
+                self.start_coords = kwargs['coordinates']
+            if kwargs['type'] == 'mouseup':
+                print(f'mouseup {kwargs["coordinates"]}')
+                self.end_coords = kwargs['coordinates']
+            #print(kwargs)
+        self.viewer.mapfigure.on_interaction(map_interaction)
 
     def deactivate(self):
-        pass
+        self.viewer.mapfigure._interaction_callbacks = CallbackDispatcher()
+        
     def close(self):
         pass
 
