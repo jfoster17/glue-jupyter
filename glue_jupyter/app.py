@@ -197,7 +197,7 @@ class JupyterApplication(Application):
         return view
 
     def map(self, *, data=None, c=None, color=None, viewer_state=None,
-        layer_state=None,show=True):
+            layer_state=None,show=True):
         from .ipyleaflet.map import IPyLeafletMapView
         viewer_cls = IPyLeafletMapView
         

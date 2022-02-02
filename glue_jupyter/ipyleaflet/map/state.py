@@ -37,12 +37,15 @@ class MapViewerState(ViewerState):
         #print(self.c_att_helper)
         #print(self.c_att_helper._data)
         #import pdb; pdb.set_trace()
-        #self._viewer_state.add_callback('c_att', self._on_attribute_change)
+        self.add_callback('c_att', self._on_attribute_change)
 
         self.c_metadata = None
         #print(self.layers_data)
         self.update_from_dict(kwargs)
 
+
+    def _on_attribute_change(self, value):
+        pass
 
     def reset_limits(self):
         pass
@@ -63,8 +66,8 @@ class MapViewerState(ViewerState):
     @defer_draw
     def _layers_changed(self, *args):
         self.c_att_helper.set_multiple_data(self.layers_data)
-        print(self.c_att_helper)
-        print(self.c_att_helper._data)
+        #print(self.c_att_helper)
+        #print(self.c_att_helper._data)
         self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
 
 

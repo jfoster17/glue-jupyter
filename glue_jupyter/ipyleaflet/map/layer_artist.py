@@ -8,6 +8,7 @@ from glue.utils import color2hex
 from ...link import link, dlink
 from .state import MapLayerState, MapSubsetLayerState
 
+from ipyleaflet.leaflet import LayerException
 import ipyleaflet
 from branca.colormap import linear
 
@@ -25,7 +26,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                                                          layer_state=layer_state, layer=layer)
 
         #print(self.state.layer[self._viewer_state.c_att])
-        #print(self.state.layer.layer)
+        #print(self.state.layer)
         choro_data = dict(zip(self.state.layer['ids'].tolist(), 
                             self.state.layer[self._viewer_state.c_att].tolist()))
         #print(choro_data)
@@ -37,7 +38,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                                     style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
                                     hover_style={'fillOpacity': 0.95},)
                                     #style_callback=subset_border)
-        
+        self._viewer_state.add_callback('c_att', self._on_attribute_change)
         self.map = map
         self.map.add_layer(self.layer_artist)
        #self.view = view
@@ -55,13 +56,12 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         if self._viewer_state.c_att is None:
             return
 
-        c = self.state.layer[self._viewer_state.c_att]
-        #import pdb; pdb.set_trace()
-
-        #Recenter map here?
-        #self.axes.set_xlim(np.nanmin(x), np.nanmax(x))
-        #self.axes.set_ylim(np.nanmin(y), np.nanmax(y))
-
+        c = self.state.layer[self._viewer_state.c_att].tolist()
+        choro_data = dict(zip(self.layer['ids'].tolist(), c))
+        
+        self.layer_artist.value_min = min(c)
+        self.layer_artist.value_max = max(c)
+        self.layer_artist.choro_data = choro_data
         self.redraw()
 
 
@@ -75,7 +75,27 @@ class IPyLeafletMapLayerArtist(LayerArtist):
     def update(self):
        # self.state.reset_cache()
         self.redraw()
-
+        
+    def redraw(self):
+        #print("In layer artist redraw")
+        if len(self.layer['ids'].tolist()) == 0:
+            pass
+        else:
+            try:
+                if len(self.map.layers) > 1:
+                    old_layer = self.map.layers[-1]
+                self.map.substitute_layer(old_layer, self.layer_artist)
+            except LayerException:
+                try: 
+                    self.map.add_layer(self.layer_artist)
+                except LayerException:
+                    pass
+            #if len(self.map.layers) > 1:
+            #    old_layer = self.map.layers[-1]
+            #    self.map.substitute_layer(old_layer, self.layer_artist)
+            #else:
+            #    self.map.add_layer(self.layer_artist)
+                
 class IPyLeafletMapSubsetLayerArtist(LayerArtist):
 
     _layer_state_cls = MapSubsetLayerState

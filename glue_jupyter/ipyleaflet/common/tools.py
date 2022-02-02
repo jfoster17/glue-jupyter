@@ -50,9 +50,9 @@ class PointSelect(CheckableTool):
 
     icon = 'glue_crosshair'
     tool_id = 'ipyleaflet:pointselect'
-    action_text = 'Does cool stuff'
-    tool_tip = 'Does cool stuff'
-    status_tip = 'Instructions on what to do now'
+    action_text = 'Select regions'
+    tool_tip = 'Select regions'
+    status_tip = 'Click to select regions to add to a subset'
     shortcut = 'D'
 
     def __init__(self, viewer):
@@ -86,7 +86,8 @@ class PointSelect(CheckableTool):
         geo_json.on_click(on_click)
 
     def deactivate(self):
-        print(f"List of Region IDs: {list(set(self.list_of_region_ids))}") #For some reason this adds all regions twice
+        pass
+        #print(f"List of Region IDs: {list(set(self.list_of_region_ids))}") #For some reason this adds all regions twice
 
     def close(self):
         pass
