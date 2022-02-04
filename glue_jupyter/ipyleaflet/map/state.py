@@ -36,7 +36,7 @@ class MapViewerState(ViewerState):
         super(MapViewerState, self).__init__()
 
         self.add_callback('layers', self._layers_changed)
-        #print(self.layers_data)
+        #print(f'layers={self.layers}')
         self.update_from_dict(kwargs)
 
         self.map = None
@@ -55,6 +55,10 @@ class MapViewerState(ViewerState):
 
     @defer_draw
     def _layers_changed(self, *args):
+        #print(f'layers={self.layers}')
+        #print(f'layers={self.layers_data}')
+        #print("Layers have changed!")
+        #print(args)
         pass
         #self.c_att_helper.set_multiple_data(self.layers_data)
         #print(self.c_att_helper)
@@ -81,28 +85,37 @@ class MapLayerState(LayerState):
         super(MapLayerState, self).__init__()
         self.c_att_helper = ComponentIDComboHelper(self, 'c_att')
         self.add_callback('c_att', self._on_attribute_change)
-    
-        self.add_callback('layer', self._update_attribute)
+        #print(layer)
+        self.layer = layer
+        #self.c_att_helper.set_multiple_data([layer])
+        #self.add_callback('layers', self._update_attribute)
         
-        if layer is not None:
-            self._update_attribute()
-        self.c_geo_metadata = None
-        self.update_from_dict(kwargs)
+        #if layer is not None:
+        #    self._update_attribute()
+        #self.c_geo_metadata = None
+       # self.update_from_dict(kwargs)
         
         
         #self.ids = self.layer['ids']
 
-    def _update_attribute(self, *args):
+    #def update(self, *args):
+    #    print("In update function...")
+
+    #def _update_attribute(self, *args):
+    #    pass
+        #if self.layer is not None:
+        #    self.c_att_helper.set_multiple_data([self.layer])
+        #    #self.c_att = self.layer.main_components[0]
+        #    print(self.layer)
+        #    print(self.c_att_helper._data)
+        #    self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
+            
+    def _on_attribute_change(self, *args):
+        #print("In _on_attribute_change")
+        #print(self.layer)
         if self.layer is not None:
             self.c_att_helper.set_multiple_data([self.layer])
-            #self.c_att = self.layer.main_components[0]
-            print(self.layer)
-            print(self.c_att_helper._data)
-            self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
-            
-    def _on_attribute_change(self):
-        pass
-        
+
     @property
     def viewer_state(self):
         return self._viewer_state

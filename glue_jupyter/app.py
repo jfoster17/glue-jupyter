@@ -207,19 +207,35 @@ class JupyterApplication(Application):
         #viewer_state_obj.c_att_helper.append_data(data) #the viewer state no longer has this attribute helper, but we still to put this data in somehow
         viewer_state = viewer_state or {}
         
-        if c is not None:
-            viewer_state['c_att'] = data.id[c]
-        
         #print(f'data = {data}')
         #print(f'c = {c}')
         _update_not_none(viewer_state)
         viewer_state_obj.update_from_dict(viewer_state)
         
-        view = self.new_data_viewer(viewer_cls, data=data,
-                                    state=viewer_state_obj, show=show)
+        #If we pass data we need to make our viewer have a layer before we can call this
+        #How does this normally happen?
+        #How do we get layers into a viewer?
+        #Maybe when we add data we get an artist layer?
+        #Yes! Add data function 
+        
+        #print(data)
+        if data is not None:
+            from .ipyleaflet.map import IPyLeafletMapLayerArtist
+            layer_artist_cls = IPyLeafletMapLayerArtist
+            layer_state_obj = layer_artist_cls._layer_state_cls()
+            layer_state_obj.c_att_helper.append_data(data)
+        
         layer_state = layer_state or {}
         _update_not_none(layer_state, color=color)
-        #print(f'layer_state={layer_state}')
+        
+        if c is not None:
+            layer_state['c_att'] = data.id[c]
+        #import sys
+        #sys.exit(1)
+        view = self.new_data_viewer(viewer_cls, data=data,
+                                    state=viewer_state_obj, show=show)
+                                        
+            #print(f'layer_state={layer_state}')
         if layer_state:
             view.layers[0].state.update_from_dict(layer_state)
         return view

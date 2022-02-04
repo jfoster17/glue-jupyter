@@ -30,13 +30,13 @@ class IPyLeafletMapLayerArtist(LayerArtist):
 
         super(IPyLeafletMapLayerArtist, self).__init__(viewer_state,
                                                          layer_state=layer_state, layer=layer)
-        
-        print(layer)
-        print(layer_state)
+        #print("We are creating a layer artists...")
+        #print(f'layer at time of LayerArtist init = {self.layer}')
+        #print(f'layer_state at time of LayerArtist init = {layer_state}')
         if viewer_state.map is None: #If we pass in a layer state
             viewer_state.map = map
-        else:
-            pass
+        #self.layer=layer
+        #self.layer_state = layer_state
     
     def clear(self):
         """Req: Remove the layer from viewer but allow it to be added back."""
@@ -47,7 +47,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         self.redraw()
     
     def update(self):
-        """Req: Update appearence of the layer before redrawing. Called when a subset is changed."""
+        """Req: Update appearance of the layer before redrawing. Called when a subset is changed."""
         self.redraw()
                 
     def redraw(self):

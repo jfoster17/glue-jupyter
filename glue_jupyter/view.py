@@ -110,12 +110,21 @@ class IPyWidgetView(Viewer):
     def show(self):
         display(self._layout)
 
+
     def add_data(self, data, color=None, alpha=None, **layer_state):
 
+        #print("In add_data")
         data = validate_data_argument(self._data, data)
-
+        #print("Data validates")
+        #print(f'_layer_artist_container={self._layer_artist_container} before add_data')
         result = super().add_data(data)
         
+        #layer = get_layer_artist_from_registry(data, self) or self.get_data_layer_artist(data)
+        #self._layer_artist_container.append(layer)
+        #layer.update()
+        
+        #print(f'_layer_artist_container={self._layer_artist_container} after add_data')
+        #print(f'result={result}')
         if not result:
             return
         layer = list(self._layer_artist_container[data])[-1]
@@ -160,3 +169,15 @@ class IPyWidgetView(Viewer):
             mode_cls = viewer_tool.members[tool_id]
             mode = mode_cls(self)
             self.toolbar.add_tool(mode)
+
+from glue.config import layer_artist_maker
+
+def get_layer_artist_from_registry(data, viewer):
+    """
+    Check whether any plugins define an appropriate custom layer artist for
+    the specified data and viewer.
+    """
+    for maker in layer_artist_maker.members:
+        layer_artist = maker.function(viewer, data)
+        if layer_artist is not None:
+            return layer_artist
