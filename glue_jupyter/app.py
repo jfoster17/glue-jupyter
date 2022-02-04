@@ -204,12 +204,14 @@ class JupyterApplication(Application):
         data = validate_data_argument(self.data_collection, data)
         
         viewer_state_obj = viewer_cls._state_cls()
-        viewer_state_obj.c_att_helper.append_data(data)
+        #viewer_state_obj.c_att_helper.append_data(data) #the viewer state no longer has this attribute helper, but we still to put this data in somehow
         viewer_state = viewer_state or {}
         
         if c is not None:
             viewer_state['c_att'] = data.id[c]
         
+        #print(f'data = {data}')
+        #print(f'c = {c}')
         _update_not_none(viewer_state)
         viewer_state_obj.update_from_dict(viewer_state)
         
@@ -217,7 +219,9 @@ class JupyterApplication(Application):
                                     state=viewer_state_obj, show=show)
         layer_state = layer_state or {}
         _update_not_none(layer_state, color=color)
-        view.layers[0].state.update_from_dict(layer_state)
+        #print(f'layer_state={layer_state}')
+        if layer_state:
+            view.layers[0].state.update_from_dict(layer_state)
         return view
             
 

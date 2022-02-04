@@ -1,42 +1,54 @@
 from glue.core.subset import roi_to_subset_state
 from .state import MapViewerState
 
-from ..common.viewer import IpyLeafletBaseView
-
 from .layer_artist import IPyLeafletMapLayerArtist, IPyLeafletMapSubsetLayerArtist
 from glue_jupyter.common.state_widgets.layer_map import MapLayerStateWidget
 from glue_jupyter.common.state_widgets.viewer_map import MapViewerStateWidget
 
 from glue.core.roi import PointROI
 
+from glue.core.subset import roi_to_subset_state
+from glue.core.command import ApplySubsetState
+
+from echo.callback_container import CallbackContainer
+
+from ...view import IPyWidgetView
+from ...link import dlink, on_change
+from ...utils import float_or_none, debounced, get_ioloop
+
+import ipyleaflet
+
 
 __all__ = ['IPyLeafletMapView']
 
 
-class IPyLeafletMapView(IpyLeafletBaseView):
+class IPyLeafletMapView(IPyWidgetView):
 
-    allow_duplicate_data = False
+    allow_duplicate_data = True
     allow_duplicate_subset = False
-    large_data_size = 1e5
-    is2d = False
+    _default_mouse_mode_cls = None
+    
 
     _state_cls = MapViewerState
-    _options_cls = MapViewerStateWidget #Need a new one of these
+    _options_cls = MapViewerStateWidget 
     _data_artist_cls = IPyLeafletMapLayerArtist
     _subset_artist_cls = IPyLeafletMapSubsetLayerArtist
-    _layer_style_widget_cls = MapLayerStateWidget #Need a new one of these
+    _layer_style_widget_cls = MapLayerStateWidget
 
-    tools = ['ipyleaflet:pointselect','ipyleaflet:rectangleselect']#'bqplot:home', 'bqplot:panzoom', 'bqplot:xrange']
+    tools = ['ipyleaflet:pointselect','ipyleaflet:rectangleselect']
 
-    def _roi_to_subset_state(self, roi):
-        # TODO: copy paste from glue/viewers/histogram/qt/data_viewer.py
-        # TODO Does subset get applied to all data or just visible data?
-
-        #if isistance(roi, PointROI): #This will be an OR/AND? not sure this will work
-        #    subset_state = ElementSubsetState()
-        
-        #else:
-        #    raise TypeError("Only PointROI selections are supported")
-
-
-        return roi_to_subset_state(roi_new, c_att=self.state.c_att)
+    def __init__(self, session, state=None):
+        super(IPyLeafletMapView, self).__init__(session, state=state)
+        self.mapfigure = ipyleaflet.Map(center=(40, -100), zoom=4)
+    
+        self.create_layout()
+    def get_layer_artist(self, cls, layer=None, layer_state=None):
+        return cls(self.mapfigure, self.state, layer=layer, layer_state=layer_state)
+    
+    @property
+    def figure_widget(self):
+        return self.mapfigure
+    
+    def redraw(self):
+        pass
+    

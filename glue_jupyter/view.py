@@ -115,10 +115,9 @@ class IPyWidgetView(Viewer):
         data = validate_data_argument(self._data, data)
 
         result = super().add_data(data)
-
+        
         if not result:
             return
-
         layer = list(self._layer_artist_container[data])[-1]
 
         layer_state = dict(layer_state)

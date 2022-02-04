@@ -163,8 +163,8 @@ def validate_data_argument(data_collection, data):
         elif len(data_collection) > 1:
             raise ValueError('There is more than one dataset in the data '
                              'collection, please pass a data argument')
-        else:
-            return data_collection[0]
+        #else: #It should be possible to launch a viewer without a dataset, although this might cause problems for some viewers
+        #    return data_collection[0]
     elif isinstance(data, str):
         if GLUE_LT_016 and data in [d.label for d in data_collection]:
             for d in data_collection:

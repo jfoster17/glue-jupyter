@@ -5,70 +5,61 @@ from glue.core import BaseData, Subset
 from echo import delay_callback
 from glue.viewers.common.state import ViewerState, LayerState
 
-from glue.viewers.matplotlib.state import (DeferredDrawCallbackProperty as DDCProperty,
-                                           DeferredDrawSelectionCallbackProperty as DDSCProperty)
-#from glue.core.state_objects import (StateAttributeLimitsHelper,
-#                                     StateAttributeHistogramHelper)
+from echo import CallbackProperty, SelectionCallbackProperty
+
 from glue.core.exceptions import IncompatibleAttribute, IncompatibleDataException
 from glue.core.data_combo_helper import ComponentIDComboHelper
 from glue.utils import defer_draw, datetime64_to_mpl
 from glue.utils.decorators import avoid_circular
+from ipyleaflet import Map, basemaps
 
 __all__ = ['MapViewerState', 'MapLayerState']
 
 
 class MapViewerState(ViewerState):
     """
-    A state class that includes all the attributes for a map viewer.
+    A state class that manages the display of an ipyleaflet Map object:
+    
+    https://ipyleaflet.readthedocs.io/en/latest/api_reference/map.html
+    
+    which serves as the base for a MapViewer
     """
 
-    c_att = DDSCProperty(docstring='The attribute to display as a choropleth')
-    lon = DDCProperty(docstring='Longitude at the center of the map')
-    lat = DDCProperty(docstring='Latitude at the center of the map')
-    zoom_level = DDCProperty(docstring='Zoom level for the map')
+    center = CallbackProperty((0,0),docstring='(Lon, Lat) at the center of the map')
+    #lon = CallbackProperty(docstring='Longitude at the center of the map')
+    #lat = CallbackProperty(docstring='Latitude at the center of the map')
+    zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
+    basemap = CallbackProperty(basemaps.OpenStreetMap.Mapnik, docstring='Basemap to display')
 
     def __init__(self, **kwargs):
 
         super(MapViewerState, self).__init__()
 
         self.add_callback('layers', self._layers_changed)
-
-        self.c_att_helper = ComponentIDComboHelper(self, 'c_att')
-        #print(self.c_att_helper)
-        #print(self.c_att_helper._data)
-        #import pdb; pdb.set_trace()
-        self.add_callback('c_att', self._on_attribute_change)
-
-        self.c_metadata = None
         #print(self.layers_data)
         self.update_from_dict(kwargs)
 
-
-    def _on_attribute_change(self, value):
+        self.map = None
+        
+    def _on_attribute_change(self):
         pass
 
     def reset_limits(self):
         pass
 
     def _update_priority(self, name):
-        if name == 'layers':
-            return 2
-        elif name.endswith('_log'):
-            return 0.5
-        elif name.endswith(('_min', '_max', '_bin')):
-            return 0
-        else:
-            return 1
-
+        pass
+        
     def flip_x(self):
         pass
 
     @defer_draw
     def _layers_changed(self, *args):
-        self.c_att_helper.set_multiple_data(self.layers_data)
+        pass
+        #self.c_att_helper.set_multiple_data(self.layers_data)
         #print(self.c_att_helper)
         #print(self.c_att_helper._data)
-        self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
+        #self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
 
 
 class MapLayerState(LayerState):
@@ -83,12 +74,35 @@ class MapLayerState(LayerState):
     visible, of course
     color_steps (whether to turn a continuous variable into a stepped display) <-- less important
     """
+    c_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
 
-    #def __init__(self, **kwargs): #Calling this init is fubar
-    #        
-    #    super(MapLayerState, self).__init__()
-    #    #self.ids = self.layer['ids']
+    def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
+            
+        super(MapLayerState, self).__init__()
+        self.c_att_helper = ComponentIDComboHelper(self, 'c_att')
+        self.add_callback('c_att', self._on_attribute_change)
+    
+        self.add_callback('layer', self._update_attribute)
+        
+        if layer is not None:
+            self._update_attribute()
+        self.c_geo_metadata = None
+        self.update_from_dict(kwargs)
+        
+        
+        #self.ids = self.layer['ids']
 
+    def _update_attribute(self, *args):
+        if self.layer is not None:
+            self.c_att_helper.set_multiple_data([self.layer])
+            #self.c_att = self.layer.main_components[0]
+            print(self.layer)
+            print(self.c_att_helper._data)
+            self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
+            
+    def _on_attribute_change(self):
+        pass
+        
     @property
     def viewer_state(self):
         return self._viewer_state
