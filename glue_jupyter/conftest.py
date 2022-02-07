@@ -48,6 +48,12 @@ def data_image():
 
 
 @pytest.fixture
+def mapapp(mapdata):
+    app = gj.jglue(mapdata=mapdata)
+    return app
+
+
+@pytest.fixture
 def app(dataxyz, datax, dataxz, data_volume, data_image):
     app = gj.jglue(dataxyz=dataxyz, dataxz=dataxz, datax=datax)
     app.add_link(dataxyz, 'x', dataxz, 'x')
