@@ -13,7 +13,7 @@ from glue.core.command import ApplySubsetState
 from echo.callback_container import CallbackContainer
 
 from ...view import IPyWidgetView
-from ...link import dlink, on_change
+from ...link import link, dlink, on_change
 from ...utils import float_or_none, debounced, get_ioloop
 
 import ipyleaflet
@@ -38,14 +38,25 @@ class IPyLeafletMapView(IPyWidgetView):
     tools = ['ipyleaflet:pointselect','ipyleaflet:rectangleselect']
 
     def __init__(self, session, state=None):
-        self.mapfigure = ipyleaflet.Map(center=(40, -100), zoom=4)
+        
         
         super(IPyLeafletMapView, self).__init__(session, state=state)
+        
+        self.mapfigure = ipyleaflet.Map(basemap=self.state.basemap)
+        
+        link((self.state, 'zoom_level'), (self.mapfigure, 'zoom'), float_or_none)
+        link((self.state, 'center'), (self.mapfigure, 'center'))
+        dlink((self.state, 'basemap'), (self.mapfigure, 'basemap')) #map does not actually have a basemap attribute. 
+        #We would need to look for layer? changes?
         
         #self.state.remove_callback('layers', self._sync_layer_artist_container)
         #self.state.add_callback('layers', self._sync_layer_artist_container, priority=10000)
         
+        #on_change([(self.state, 'basemap')])(self._change_basemap)
         self.create_layout()
+        
+    #def _change_basemap(self):
+    #    print('In Viewer _change_basemap')
         
     def get_layer_artist(self, cls, layer=None, layer_state=None):
         return cls(self.mapfigure, self.state, layer=layer, layer_state=layer_state)

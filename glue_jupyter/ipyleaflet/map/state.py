@@ -11,7 +11,7 @@ from glue.core.exceptions import IncompatibleAttribute, IncompatibleDataExceptio
 from glue.core.data_combo_helper import ComponentIDComboHelper
 from glue.utils import defer_draw, datetime64_to_mpl
 from glue.utils.decorators import avoid_circular
-from ipyleaflet import Map, basemaps
+from ipyleaflet import Map, basemaps, basemap_to_tiles
 
 __all__ = ['MapViewerState', 'MapLayerState']
 
@@ -25,7 +25,7 @@ class MapViewerState(ViewerState):
     which serves as the base for a MapViewer
     """
 
-    center = CallbackProperty((0,0),docstring='(Lon, Lat) at the center of the map')
+    center = CallbackProperty((40,-100),docstring='(Lon, Lat) at the center of the map')
     #lon = CallbackProperty(docstring='Longitude at the center of the map')
     #lat = CallbackProperty(docstring='Latitude at the center of the map')
     zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
@@ -36,10 +36,24 @@ class MapViewerState(ViewerState):
         super(MapViewerState, self).__init__()
 
         self.add_callback('layers', self._layers_changed)
+        #self.add_callback('basemap', self._basemap_changed)
+        #self.add_callback('basemap', self._basemap_changed)
         #print(f'layers={self.layers}')
         self.update_from_dict(kwargs)
 
         self.map = None
+    
+    
+    #def _basemap_changed(self, basemap):
+    #    """
+    #    The syntax to update a the basemap is sort of funky but this sort of thing
+    #    could work if we attach a callback to the layers (first layer?) of the map
+    #    """
+    #    print(f"Called _basemap_changed with {basemap}")
+    #    if (self.map is not None):# and (len(self.map.layers) > 0):
+    #        print(f"self.map is not None")
+    #        
+    #        self.map.layers=[basemap_to_tiles(basemap)]
         
     def _on_attribute_change(self):
         pass
@@ -79,6 +93,7 @@ class MapLayerState(LayerState):
     color_steps (whether to turn a continuous variable into a stepped display) <-- less important
     """
     c_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
+    color_map = CallbackProperty(None, docstring='Colormap used to display this layer')
 
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
             
@@ -87,6 +102,7 @@ class MapLayerState(LayerState):
         self.add_callback('c_att', self._on_attribute_change)
         #print(layer)
         self.layer = layer
+        self._on_attribute_change()
         #self.c_att_helper.set_multiple_data([layer])
         #self.add_callback('layers', self._update_attribute)
         

@@ -196,7 +196,8 @@ class JupyterApplication(Application):
         view.layers[0].state.update_from_dict(layer_state)
         return view
 
-    def map(self, *, data=None, c=None, color=None, viewer_state=None,
+    def map(self, *, data=None, c=None, zoom_level=None, center=None, basemap=None,
+            colormap=None, viewer_state=None,
             layer_state=None,show=True):
         from .ipyleaflet.map import IPyLeafletMapView
         viewer_cls = IPyLeafletMapView
@@ -209,9 +210,9 @@ class JupyterApplication(Application):
         
         #print(f'data = {data}')
         #print(f'c = {c}')
-        _update_not_none(viewer_state)
+        _update_not_none(viewer_state, zoom_level=zoom_level, center=center, basemap=basemap)
         viewer_state_obj.update_from_dict(viewer_state)
-        
+        #print(viewer_state_obj)
         #If we pass data we need to make our viewer have a layer before we can call this
         #How does this normally happen?
         #How do we get layers into a viewer?
@@ -226,7 +227,7 @@ class JupyterApplication(Application):
             layer_state_obj.c_att_helper.append_data(data)
         
         layer_state = layer_state or {}
-        _update_not_none(layer_state, color=color)
+        _update_not_none(layer_state, colormap=colormap)
         
         if c is not None:
             layer_state['c_att'] = data.id[c]
