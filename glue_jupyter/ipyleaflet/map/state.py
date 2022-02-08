@@ -13,6 +13,9 @@ from glue.utils import defer_draw, datetime64_to_mpl
 from glue.utils.decorators import avoid_circular
 from ipyleaflet import Map, basemaps, basemap_to_tiles
 
+
+from branca.colormap import linear
+
 __all__ = ['MapViewerState', 'MapLayerState']
 
 
@@ -41,7 +44,7 @@ class MapViewerState(ViewerState):
         #print(f'layers={self.layers}')
         self.update_from_dict(kwargs)
 
-        self.map = None
+        #self.mapfigure = None
     
     
     #def _basemap_changed(self, basemap):
@@ -93,15 +96,18 @@ class MapLayerState(LayerState):
     color_steps (whether to turn a continuous variable into a stepped display) <-- less important
     """
     c_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
-    color_map = CallbackProperty(None, docstring='Colormap used to display this layer')
+    
+    colormap = CallbackProperty('YlOrRd_04', docstring='Colormap used to display this layer')
+    
 
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
             
         super(MapLayerState, self).__init__()
-        self.c_att_helper = ComponentIDComboHelper(self, 'c_att')
+        self.c_att_helper = ComponentIDComboHelper(self, 'c_att', numeric=True)
         self.add_callback('c_att', self._on_attribute_change)
         #print(layer)
-        self.layer = layer
+        self.layer = layer #This is critical!
+        
         self._on_attribute_change()
         #self.c_att_helper.set_multiple_data([layer])
         #self.add_callback('layers', self._update_attribute)
@@ -131,6 +137,10 @@ class MapLayerState(LayerState):
         #print(self.layer)
         if self.layer is not None:
             self.c_att_helper.set_multiple_data([self.layer])
+            self.c_geo_metadata = self.layer.meta['geo']
+            #print(self.c_att_helper)
+            #print(self.c_att)
+            #print(self.c_geo_metadata)
 
     @property
     def viewer_state(self):

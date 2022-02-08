@@ -1,12 +1,14 @@
 import numpy as np
 import bqplot
 
+from glue.core import BaseData
 from glue.core.exceptions import IncompatibleAttribute
 from glue.viewers.common.layer_artist import LayerArtist
 from glue.utils import color2hex
 
 from ...link import link, dlink
 from .state import MapLayerState, MapSubsetLayerState
+
 
 from ipyleaflet.leaflet import LayerException, LayersControl
 import ipyleaflet
@@ -26,18 +28,68 @@ class IPyLeafletMapLayerArtist(LayerArtist):
     
     _layer_state_cls = MapLayerState
 
-    def __init__(self, map, viewer_state, layer_state=None, layer=None):
+    def __init__(self, mapfigure, viewer_state, layer_state=None, layer=None):
 
         super(IPyLeafletMapLayerArtist, self).__init__(viewer_state,
                                                          layer_state=layer_state, layer=layer)
         #print("We are creating a layer artists...")
         #print(f'layer at time of LayerArtist init = {self.layer}')
         #print(f'layer_state at time of LayerArtist init = {layer_state}')
-        if viewer_state.map is None: #If we pass in a layer state
-            viewer_state.map = map
-        #self.layer=layer
+        #if self._viewer_state.map is None: #If we pass in a layer state
+        #    self._viewer_state.map = map
+        self.layer=layer
         #self.layer_state = layer_state
+        self.mapfigure = mapfigure
+        self.state.add_callback('c_att', self._on_attribute_change)
+        print(self.state)
+        #choro_data = dict(zip(self.state.layer['ids'].tolist(), 
+        #                        self.state.layer[self.state.c_att].tolist()))
+        
+        self.layer_artist = ipyleaflet.Choropleth()
+                                    #geo_data=self.state.c_geo_metadata, #This should be in a layer, not in the viewer state...
+                                    #choro_data=choro_data,
+                                    #colormap=self.state.colormap,
+                                    #border_color='black',
+                                    #style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
+                                    #hover_style={'fillOpacity': 0.95},)
+        
+        self.mapfigure.add_layer(self.layer_artist)
+        
+        #self.colormap = 
+        #link((self.state, 'colormap'), (self.mapfigure.layers[1], 'colormap')) #We need to keep track of the layer?
+        
+    def _on_attribute_change(self, value=None):
+        if self.state.c_att is None:
+            return
+        
+        if isinstance(self.layer, BaseData):
+            layer = self.layer
+        else:
+            layer = self.layer.data
+        
+        print(f'c_att is {self.state.c_att}')
     
+        #print(layer.get_kind(self.state.c_att))
+        if layer.get_kind(self.state.c_att) != 'numerical':
+            return
+        
+        #with delay_callback(self, '')
+        c = self.state.layer[self.state.c_att].tolist()
+        choro_data = dict(zip(self.state.layer['ids'].tolist(), c))
+        #print(choro_data)
+        #self.new_layer_artist = ipyleaflet.Choropleth(
+        #                            geo_data=self.state.c_geo_metadata, 
+        #                            choro_data=choro_data)
+        self.layer_artist.choro_data = choro_data
+        self.layer_artist.geo_data = self.state.c_geo_metadata
+        self.layer_artist.value_min = min(c)
+        self.layer_artist.value_max = max(c)
+        
+        #self.mapfigure.substitute_layer(self.layer_artist, self.new_layer_artist)
+        #Update zoom and center?
+        
+        self.redraw()
+        
     def clear(self):
         """Req: Remove the layer from viewer but allow it to be added back."""
         pass
@@ -48,6 +100,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
     
     def update(self):
         """Req: Update appearance of the layer before redrawing. Called when a subset is changed."""
+        self._on_attribute_change()
         self.redraw()
                 
     def redraw(self):
@@ -58,11 +111,11 @@ class IPyLeafletMapSubsetLayerArtist(LayerArtist):
 
     _layer_state_cls = MapSubsetLayerState
 
-    def __init__(self, map, viewer_state, layer_state=None, layer=None):
+    def __init__(self, mapfigure, viewer_state, layer_state=None, layer=None):
 
         super(IPyLeafletMapSubsetLayerArtist, self).__init__(viewer_state,
                                                          layer_state=layer_state, layer=layer)
-        self.map = map
+        self.mapfigure = mapfigure
         self.layer = layer
         self.layer_state = layer_state
 

@@ -46,7 +46,7 @@ class IPyLeafletMapView(IPyWidgetView):
         
         link((self.state, 'zoom_level'), (self.mapfigure, 'zoom'), float_or_none)
         link((self.state, 'center'), (self.mapfigure, 'center'))
-        dlink((self.state, 'basemap'), (self.mapfigure, 'basemap')) #map does not actually have a basemap attribute. 
+        #dlink((self.state, 'basemap'), (self.mapfigure, 'basemap')) #map does not actually have a basemap attribute. 
         #We would need to look for layer? changes?
         
         #self.state.remove_callback('layers', self._sync_layer_artist_container)
