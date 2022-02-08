@@ -41,11 +41,14 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         #self.layer_state = layer_state
         self.mapfigure = mapfigure
         self.state.add_callback('c_att', self._on_attribute_change)
+        self.state.add_callback('colormap', self._on_colormap_change)
         print(self.state)
         #choro_data = dict(zip(self.state.layer['ids'].tolist(), 
         #                        self.state.layer[self.state.c_att].tolist()))
         
-        self.layer_artist = ipyleaflet.Choropleth()
+        self.layer_artist = ipyleaflet.Choropleth(border_color='black',
+                                                    style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
+                                                    hover_style={'fillOpacity': 0.95},)
                                     #geo_data=self.state.c_geo_metadata, #This should be in a layer, not in the viewer state...
                                     #choro_data=choro_data,
                                     #colormap=self.state.colormap,
@@ -58,6 +61,22 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         #self.colormap = 
         #link((self.state, 'colormap'), (self.mapfigure.layers[1], 'colormap')) #We need to keep track of the layer?
         
+    def _on_colormap_change(self, value=None):
+        print(f'in _on_colormap_change')
+        print(f'state.colormap = {self.state.colormap}')
+        print(f'value = {value}')
+        
+        if self.state.colormap is None:
+            return
+        #self.state.colormap = value
+        
+        if self.state.colormap == 'viridis':
+            colormap = linear.viridis
+        else:
+            colormap = linear.YlOrRd_04
+        self.layer_artist.colormap = colormap
+        self.redraw()
+    
     def _on_attribute_change(self, value=None):
         if self.state.c_att is None:
             return
@@ -85,6 +104,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         self.layer_artist.value_min = min(c)
         self.layer_artist.value_max = max(c)
         
+        self._on_colormap_change()
         #self.mapfigure.substitute_layer(self.layer_artist, self.new_layer_artist)
         #Update zoom and center?
         

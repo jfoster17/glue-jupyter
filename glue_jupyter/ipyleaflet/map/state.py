@@ -8,12 +8,12 @@ from glue.viewers.common.state import ViewerState, LayerState
 from echo import CallbackProperty, SelectionCallbackProperty
 
 from glue.core.exceptions import IncompatibleAttribute, IncompatibleDataException
-from glue.core.data_combo_helper import ComponentIDComboHelper
+from glue.core.data_combo_helper import ComponentIDComboHelper, ComboHelper
 from glue.utils import defer_draw, datetime64_to_mpl
 from glue.utils.decorators import avoid_circular
 from ipyleaflet import Map, basemaps, basemap_to_tiles
 
-
+from glue.config import colormaps
 from branca.colormap import linear
 
 __all__ = ['MapViewerState', 'MapLayerState']
@@ -97,14 +97,22 @@ class MapLayerState(LayerState):
     """
     c_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
     
-    colormap = CallbackProperty('YlOrRd_04', docstring='Colormap used to display this layer')
+    colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
     
 
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
             
         super(MapLayerState, self).__init__()
         self.c_att_helper = ComponentIDComboHelper(self, 'c_att', numeric=True)
+        self.colormap_helper = ComboHelper(self, 'colormap')
+        self.colormap_helper.choices = ['YlOrRd_04','viridis']
+        self.colormap_helper.selection = 'viridis'
         self.add_callback('c_att', self._on_attribute_change)
+        
+        #self.cmap = 'viridis'#colormaps.members[0][1]
+        #print(f'cmap = {self.cmap}')
+        #self.add_callback('colormap', self._on_colormap_change) Do we need this, actually?
+        
         #print(layer)
         self.layer = layer #This is critical!
         
