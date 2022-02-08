@@ -62,18 +62,19 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         #link((self.state, 'colormap'), (self.mapfigure.layers[1], 'colormap')) #We need to keep track of the layer?
         
     def _on_colormap_change(self, value=None):
-        print(f'in _on_colormap_change')
-        print(f'state.colormap = {self.state.colormap}')
-        print(f'value = {value}')
+        #print(f'in _on_colormap_change')
+        #print(f'state.colormap = {self.state.colormap}')
+        #print(f'value = {value}')
         
         if self.state.colormap is None:
             return
         #self.state.colormap = value
         
-        if self.state.colormap == 'viridis':
-            colormap = linear.viridis
-        else:
-            colormap = linear.YlOrRd_04
+        try:
+            colormap = getattr(linear,self.state.colormap)
+        except AttributeError:
+            print("attribute error")
+            colormap = linear.viridis #We need a default
         self.layer_artist.colormap = colormap
         self.redraw()
     

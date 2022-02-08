@@ -105,7 +105,7 @@ class MapLayerState(LayerState):
         super(MapLayerState, self).__init__()
         self.c_att_helper = ComponentIDComboHelper(self, 'c_att', numeric=True)
         self.colormap_helper = ComboHelper(self, 'colormap')
-        self.colormap_helper.choices = ['YlOrRd_04','viridis']
+        self.colormap_helper.choices = ['viridis','YlOrRd_04','PuBuGn_04','PuOr_04','Purples_09','YlGnBu_09','Blues_08','PuRd_06']
         self.colormap_helper.selection = 'viridis'
         self.add_callback('c_att', self._on_attribute_change)
         
