@@ -29,6 +29,19 @@ def test_make_map_with_data_and_component(mapapp, mapdata):
     s = mapapp.map(data=mapdata, c= 'Count_Person')
     assert len(s.layers) == 1
 
+def test_colormap(mapapp, mapdata):
+    purple_test_colors = np.array([(0.9882352941176471, 0.984313725490196, 0.9921568627450981, 1.0),
+         (0.9372549019607843, 0.9294117647058824, 0.9607843137254902, 1.0),
+         (0.8549019607843137, 0.8549019607843137, 0.9215686274509803, 1.0),
+         (0.7372549019607844, 0.7411764705882353, 0.8627450980392157, 1.0),
+         (0.6196078431372549, 0.6039215686274509, 0.7843137254901961, 1.0),
+         (0.5019607843137255, 0.49019607843137253, 0.7294117647058823, 1.0),
+         (0.41568627450980394, 0.3176470588235294, 0.6392156862745098, 1.0),
+         (0.32941176470588235, 0.15294117647058825, 0.5607843137254902, 1.0),
+         (0.24705882352941178, 0.0, 0.49019607843137253, 1.0)])
+    s = mapapp.map(data=mapdata, c= 'Count_Person', colormap='Purples_09')
+    assert s.layers[0].state.colormap == 'Purples_09'
+    assert_allclose(s.mapfigure.layers[1].colormap.colors,purple_test_colors)
 
 def test_empty_map_set_init_and_check_sync(mapapp):
     
