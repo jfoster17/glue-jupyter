@@ -1,3 +1,20 @@
+"""
+Next steps
+- Should we use GeoPandas as our base data type? The main advantage is that it allows
+us to have a single layer for points and shapes 
+https://ipyleaflet.readthedocs.io/en/latest/api_reference/geodata.html
+although I'm not sure how well it will play as a glue data type. Geopandas has some 
+nice tools to handle geometry stuff, but how does it work for glue subsets and all that?
+- If we do not do the above, we need to handle at least markers... perhaps as marker clusters? https://ipyleaflet.readthedocs.io/en/latest/api_reference/marker_cluster.html. Basic handling is probably pretty simple. The state class for a layer needs to 
+know what kind of data we are plotting in this layer and then it can communicate this to the layer artist to handle
+all the actual logic
+- I broke subset creation/display in my re-org, and we need to bring this back in
+- Layers currently cannot be hidden or re-ordered. Maybe work on this at the same time as doing sync with native controls?
+- Viewer state can display zoom level (but this is not that great) and center
+- When we add data to a layer it makes sense to try and center on it.
+
+"""
+
 import numpy as np
 import bqplot
 
