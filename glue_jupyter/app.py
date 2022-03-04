@@ -196,7 +196,7 @@ class JupyterApplication(Application):
         view.layers[0].state.update_from_dict(layer_state)
         return view
 
-    def map(self, *, data=None, c=None, zoom_level=None, center=None, basemap=None,
+    def map(self, *, data=None, color=None, zoom_level=None, center=None, basemap=None,
             colormap=None, viewer_state=None,
             layer_state=None, show=True):
         from .ipyleaflet.map import IPyLeafletMapView
@@ -205,7 +205,7 @@ class JupyterApplication(Application):
         data = validate_data_argument(self.data_collection, data)
         
         viewer_state_obj = viewer_cls._state_cls()
-        #viewer_state_obj.c_att_helper.append_data(data) #the viewer state no longer has this attribute helper, but we still to put this data in somehow
+        #viewer_state_obj.color_att_helper.append_data(data) #the viewer state no longer has this attribute helper, but we still to put this data in somehow
         viewer_state = viewer_state or {}
         
         #print(f'data = {data}')
@@ -224,13 +224,13 @@ class JupyterApplication(Application):
             from .ipyleaflet.map import IPyLeafletMapLayerArtist
             layer_artist_cls = IPyLeafletMapLayerArtist
             layer_state_obj = layer_artist_cls._layer_state_cls()
-            layer_state_obj.c_att_helper.append_data(data)
+            layer_state_obj.color_att_helper.append_data(data)
         
         layer_state = layer_state or {}
         _update_not_none(layer_state, colormap=colormap)
         
-        if c is not None:
-            layer_state['c_att'] = data.id[c]
+        if color is not None:
+            layer_state['color_att'] = data.id[color]
         #import sys
         #sys.exit(1)
         view = self.new_data_viewer(viewer_cls, data=data,

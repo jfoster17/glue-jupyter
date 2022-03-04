@@ -40,6 +40,7 @@ class IPyLeafletMapView(IPyWidgetView):
     def __init__(self, session, state=None):
         
         
+        #print("Inside init for the viewer")
         super(IPyLeafletMapView, self).__init__(session, state=state)
         
         self.mapfigure = ipyleaflet.Map(basemap=self.state.basemap)

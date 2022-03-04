@@ -16,21 +16,19 @@ from ipyleaflet import Map, basemaps, basemap_to_tiles
 from glue.config import colormaps
 from branca.colormap import linear
 
+from ..data import GeoRegionData
+
 __all__ = ['MapViewerState', 'MapLayerState']
 
 
 class MapViewerState(ViewerState):
     """
     A state class that manages the display of an ipyleaflet Map object:
-    
     https://ipyleaflet.readthedocs.io/en/latest/api_reference/map.html
-    
-    which serves as the base for a MapViewer
+    which serves as the base for a MapViewer.    
     """
 
     center = CallbackProperty((40,-100),docstring='(Lon, Lat) at the center of the map')
-    #lon = CallbackProperty(docstring='Longitude at the center of the map')
-    #lat = CallbackProperty(docstring='Latitude at the center of the map')
     zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
     basemap = CallbackProperty(basemaps.OpenStreetMap.Mapnik, docstring='Basemap to display')
 
@@ -42,6 +40,7 @@ class MapViewerState(ViewerState):
         #self.add_callback('basemap', self._basemap_changed)
         #self.add_callback('basemap', self._basemap_changed)
         #print(f'layers={self.layers}')
+        print("Trying to update_from_dict...")
         self.update_from_dict(kwargs)
 
         #self.mapfigure = None
@@ -77,10 +76,10 @@ class MapViewerState(ViewerState):
         #print("Layers have changed!")
         #print(args)
         pass
-        #self.c_att_helper.set_multiple_data(self.layers_data)
-        #print(self.c_att_helper)
-        #print(self.c_att_helper._data)
-        #self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
+        #self.color_att_helper.set_multiple_data(self.layers_data)
+        #print(self.color_att_helper)
+        #print(self.color_att_helper._data)
+        #self.c_geo_metadata = self.color_att_helper._data[0].meta['geo']
 
 
 class MapLayerState(LayerState):
@@ -89,25 +88,45 @@ class MapLayerState(LayerState):
     
     This should have attributes for:
     
-    colorscale (a list of available cmaps: 
-                from branca.colormap import linear for continuous
-                qualitative for categorical)
-    visible, of course
+    
+    Parameters
+    ----------
+    lat_att : `~glue.core.component_id.ComponentID`
+        The attribute to display as latitude. For choropleth-type data this is a special coordinate component.
+    lon_att : `~glue.core.component_id.ComponentID`
+        The attribute to display as longitude. For choropleth-type data this is a special coordinate component.
+    color_att : `~glue.core.component_id.ComponentID`
+        The values of this attribute determine the color of points or regions
+    colormap : string
+        A string (because colormap object themselves cannot travel through json) describing the colormap to 
+        apply to color_att values.                
+    visible : boolean
+    
     color_steps (whether to turn a continuous variable into a stepped display) <-- less important
     """
-    c_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
+    color_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
     
     colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
-    
+    lon_att = SelectionCallbackProperty(docstring='The attribute to display as longitude')
+    lat_att = SelectionCallbackProperty(docstring='The attribute to display as longitude')
 
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
             
         super(MapLayerState, self).__init__()
-        self.c_att_helper = ComponentIDComboHelper(self, 'c_att', numeric=True)
+        self.color_att_helper = ComponentIDComboHelper(self, 'color_att', numeric=True)
+        
+        self.lon_att_helper = ComponentIDComboHelper(self, 'lon_att', numeric=True,
+                                                    pixel_coord=True, world_coord=True, datetime=False, categorical=False)
+        self.lat_att_helper = ComponentIDComboHelper(self, 'lat_att', numeric=True,
+                                                    pixel_coord=True, world_coord=True, datetime=False, categorical=False)
+        
+        #To be fancy we should determine the type of color_att and set the colormap choices based on that
+        #Except ipyleaflet seems to have a limited set of colormaps -- and are any categorical?
+        
         self.colormap_helper = ComboHelper(self, 'colormap')
         self.colormap_helper.choices = ['viridis','YlOrRd_04','PuBuGn_04','PuOr_04','Purples_09','YlGnBu_09','Blues_08','PuRd_06']
         self.colormap_helper.selection = 'viridis'
-        self.add_callback('c_att', self._on_attribute_change)
+        self.add_callback('color_att', self._on_attribute_change)
         
         #self.cmap = 'viridis'#colormaps.members[0][1]
         #print(f'cmap = {self.cmap}')
@@ -116,8 +135,21 @@ class MapLayerState(LayerState):
         #print(layer)
         self.layer = layer #This is critical!
         
+        # We distinguish between layers that plot regions and those that plot points
+        # Glue can only plot region-type data for datasets stored as GeoData objects
+        if isinstance(self.layer, GeoRegionData):
+            self.layer_type = 'regions'
+            if (self.layer.geometry.geom_type == 'Point').all():
+                self.layer_type = 'points'
+            elif (self.layer.geometry.geom_type == 'LineString').all():
+                self.layer_type = 'lines'
+        else:
+            self.layer_type = 'points'
+        
+        if self.viewer_state is not None:
+            self._on_attribute_change()
         self._on_attribute_change()
-        #self.c_att_helper.set_multiple_data([layer])
+        #self.color_att_helper.set_multiple_data([layer])
         #self.add_callback('layers', self._update_attribute)
         
         #if layer is not None:
@@ -134,20 +166,20 @@ class MapLayerState(LayerState):
     #def _update_attribute(self, *args):
     #    pass
         #if self.layer is not None:
-        #    self.c_att_helper.set_multiple_data([self.layer])
-        #    #self.c_att = self.layer.main_components[0]
+        #    self.color_att_helper.set_multiple_data([self.layer])
+        #    #self.color_att = self.layer.main_components[0]
         #    print(self.layer)
-        #    print(self.c_att_helper._data)
-        #    self.c_geo_metadata = self.c_att_helper._data[0].meta['geo']
+        #    print(self.color_att_helper._data)
+        #    self.c_geo_metadata = self.color_att_helper._data[0].meta['geo']
             
     def _on_attribute_change(self, *args):
         #print("In _on_attribute_change")
         #print(self.layer)
         if self.layer is not None:
-            self.c_att_helper.set_multiple_data([self.layer])
-            self.c_geo_metadata = self.layer.meta['geo']
-            #print(self.c_att_helper)
-            #print(self.c_att)
+            self.color_att_helper.set_multiple_data([self.layer])
+            #self.c_geo_metadata = self.layer.meta['geo']
+            #print(self.color_att_helper)
+            #print(self.color_att)
             #print(self.c_geo_metadata)
 
     @property

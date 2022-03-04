@@ -1,7 +1,7 @@
 <template>
     <div>
         <div>
-            <v-select :items="c_att_items" label="choropleth attribute" v-model="c_att_selected"/>
+            <v-select :items="color_att_items" label="choropleth attribute" v-model="color_att_selected"/>
             </v-select>
         </div>
         <div>
