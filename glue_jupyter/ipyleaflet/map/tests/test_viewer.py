@@ -8,6 +8,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import geopandas
+import pandas as pd
 
 from glue.core import Data
 from glue.core.data_factories import pandas_read_table
@@ -19,23 +20,40 @@ DATA = os.path.join(os.path.dirname(__file__), 'data')
 
 
 @pytest.fixture
-def nycdata():
-    path_to_data = geopandas.datasets.get_path("nybb")
+def capitols():
+    capitols = pd.read_csv(DATA+'/state_capitols.txt')
+    return Data(capitols,label='capitols')
+
+
+@pytest.fixture
+def cities():
+    path_to_data = geopandas.datasets.get_path("naturalearth_cities")
     gdf = geopandas.read_file(path_to_data)
-    nycdata = GeoRegionData(gdf,'nyc_boroughs')
-    return nycdata
+    cities = GeoRegionData(gdf,'cities')
+    return cities
+
+
+@pytest.fixture
+def earthdata():
+    path_to_data = geopandas.datasets.get_path("naturalearth_lowres")
+    gdf = geopandas.read_file(path_to_data)
+    earthdata = GeoRegionData(gdf,'countries')
+    return earthdata
+
 
 @pytest.fixture
 def mapdata():
-    with open(DATA+'/us-states.json','r') as f:
-        geo_json_data = json.load(f)
-    mapdata = pandas_read_table(DATA+'/test_map_data.csv')
-    mapdata.meta['geo'] = geo_json_data
+    states = geopandas.read_file(DATA+'/us-states.json')
+    state_data = pd.read_csv(DATA+'/test_map_data.csv')
+    state_data.rename({'ids':'id'},axis=1,inplace=True)
+    gdf = pd.merge(states,state_data,on='id')
+    mapdata = GeoRegionData(gdf,'states')
     return mapdata
-    
-def test_state_with_geopandas(mapapp, nycdata):
-    mapapp.add_data(nycdata=nycdata)
-    s = mapapp.map(data=nycdata)
+
+
+def test_state_with_geopandas(mapapp, earthdata):
+    mapapp.add_data(earthdata=earthdata)
+    s = mapapp.map(data=earthdata)
     print(s.layers[0])
     assert s.layers[0].state.layer_type == 'regions'
 

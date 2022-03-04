@@ -104,21 +104,23 @@ class MapLayerState(LayerState):
     
     color_steps (whether to turn a continuous variable into a stepped display) <-- less important
     """
+    lat_att = SelectionCallbackProperty(default_index=1, docstring='The attribute to display as latitude')
+    lon_att = SelectionCallbackProperty(default_index=2, docstring='The attribute to display as longitude')
+    
     color_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
     
     colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
-    lon_att = SelectionCallbackProperty(docstring='The attribute to display as longitude')
-    lat_att = SelectionCallbackProperty(docstring='The attribute to display as longitude')
 
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
             
         super(MapLayerState, self).__init__()
-        self.color_att_helper = ComponentIDComboHelper(self, 'color_att', numeric=True)
+        
+        self.lat_att_helper = ComponentIDComboHelper(self, 'lat_att', numeric=True,
+                                                    pixel_coord=True, world_coord=True, datetime=False, categorical=False)
         
         self.lon_att_helper = ComponentIDComboHelper(self, 'lon_att', numeric=True,
                                                     pixel_coord=True, world_coord=True, datetime=False, categorical=False)
-        self.lat_att_helper = ComponentIDComboHelper(self, 'lat_att', numeric=True,
-                                                    pixel_coord=True, world_coord=True, datetime=False, categorical=False)
+        self.color_att_helper = ComponentIDComboHelper(self, 'color_att', numeric=True)
         
         #To be fancy we should determine the type of color_att and set the colormap choices based on that
         #Except ipyleaflet seems to have a limited set of colormaps -- and are any categorical?
@@ -126,8 +128,10 @@ class MapLayerState(LayerState):
         self.colormap_helper = ComboHelper(self, 'colormap')
         self.colormap_helper.choices = ['viridis','YlOrRd_04','PuBuGn_04','PuOr_04','Purples_09','YlGnBu_09','Blues_08','PuRd_06']
         self.colormap_helper.selection = 'viridis'
-        self.add_callback('color_att', self._on_attribute_change)
-        
+        #self.add_callback('color_att', self._on_attribute_change)
+
+        self.add_callback('layer', self._layer_changed)
+
         #self.cmap = 'viridis'#colormaps.members[0][1]
         #print(f'cmap = {self.cmap}')
         #self.add_callback('colormap', self._on_colormap_change) Do we need this, actually?
@@ -146,9 +150,9 @@ class MapLayerState(LayerState):
         else:
             self.layer_type = 'points'
         
-        if self.viewer_state is not None:
-            self._on_attribute_change()
-        self._on_attribute_change()
+        #if self.viewer_state is not None:
+        #    self._on_attribute_change()
+        #self._on_attribute_change()
         #self.color_att_helper.set_multiple_data([layer])
         #self.add_callback('layers', self._update_attribute)
         
@@ -171,16 +175,18 @@ class MapLayerState(LayerState):
         #    print(self.layer)
         #    print(self.color_att_helper._data)
         #    self.c_geo_metadata = self.color_att_helper._data[0].meta['geo']
-            
+    def _layer_changed(self, *args):
+        if self.layer is not None:
+            self.lon_att_helper.set_multiple_data([self.layer])
+            self.lat_att_helper.set_multiple_data([self.layer])
+            self.color_att_helper.set_multiple_data([self.layer])
+        
     def _on_attribute_change(self, *args):
         #print("In _on_attribute_change")
         #print(self.layer)
         if self.layer is not None:
             self.color_att_helper.set_multiple_data([self.layer])
-            #self.c_geo_metadata = self.layer.meta['geo']
-            #print(self.color_att_helper)
-            #print(self.color_att)
-            #print(self.c_geo_metadata)
+
 
     @property
     def viewer_state(self):

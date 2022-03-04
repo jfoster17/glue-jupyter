@@ -28,7 +28,9 @@ from ...link import link, dlink
 from .state import MapLayerState, MapSubsetLayerState
 
 
-from ipyleaflet.leaflet import LayerException, LayersControl
+from ..data import GeoRegionData
+
+from ipyleaflet.leaflet import LayerException, LayersControl, CircleMarker
 import ipyleaflet
 from branca.colormap import linear
 
@@ -59,6 +61,9 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         #self.layer_state = layer_state
         self.mapfigure = mapfigure
         self.state.add_callback('color_att', self._on_attribute_change)
+        self.state.add_callback('lat_att', self._on_attribute_change)
+        self.state.add_callback('lon_att', self._on_attribute_change)
+        
         self.state.add_callback('colormap', self._on_colormap_change)
         print(self.state)
         #choro_data = dict(zip(self.state.layer['ids'].tolist(), 
@@ -66,28 +71,11 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         
         
         if self.state.layer_type == 'regions':
-            #gdf = self.state.layer.gdf
-            #choro_data = dict(zip([str(x) for x in self.state.layer['Pixel Axis 0 [x]']], 
-            #                        self.state.layer[self.state.color_att].tolist()))
-            self.layer_artist = ipyleaflet.Choropleth(#geo_data = json.loads(gdf.to_json()),
-                                                      #choro_data = choro_data,
-                                                      border_color='black',
+            self.layer_artist = ipyleaflet.Choropleth(border_color='black',
                                                       style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
                                                       hover_style={'fillOpacity': 0.95},)
-            
-            
-            
-          #  self.layer_artist = ipyleaflet.Choropleth(
-          #                                              border_color='black',
-        #                                            style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
-        #                                            hover_style={'fillOpacity': 0.95},)
-                                    #geo_data=self.state.c_geo_metadata, #This should be in a layer, not in the viewer state...
-                                    #choro_data=choro_data,
-                                    #colormap=self.state.colormap,
-                                    #border_color='black',
-                                    #style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
-                                    #hover_style={'fillOpacity': 0.95},)
-        
+        else:
+            self.layer_artist = ipyleaflet.LayerGroup()
         self.mapfigure.add_layer(self.layer_artist)
         
         #self.colormap = 
@@ -111,8 +99,8 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         self.redraw()
     
     def _on_attribute_change(self, value=None):
-        if self.state.color_att is None:
-            return
+        #if self.state.color_att is None:
+        #    return
         
         if isinstance(self.layer, BaseData):
             layer = self.layer
@@ -122,8 +110,8 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         print(f'color_att is {self.state.color_att}')
     
         #print(layer.get_kind(self.state.color_att))
-        if layer.get_kind(self.state.color_att) != 'numerical':
-            return
+        #if layer.get_kind(self.state.color_att) != 'numerical':
+        #    return
         
         #with delay_callback(self, '')
         if self.state.layer_type == 'regions':
@@ -131,15 +119,24 @@ class IPyLeafletMapLayerArtist(LayerArtist):
             gdf = self.state.layer.gdf
             c = self.state.layer[self.state.color_att].tolist()
             choro_data = dict(zip([str(x) for x in self.state.layer['Pixel Axis 0 [x]']], c))
-            #choro_data = dict(zip(self.state.layer['ids'].tolist(), c))
-            #print(choro_data)
-            #self.new_layer_artist = ipyleaflet.Choropleth(
-            #                            geo_data=self.state.c_geo_metadata, 
-            #                            choro_data=choro_data)
             self.layer_artist.value_min = np.min(c) #I think this does not work on categorical
             self.layer_artist.value_max = np.max(c)
             self.layer_artist.choro_data = choro_data
             self.layer_artist.geo_data = json.loads(gdf.to_json())
+
+        elif self.state.layer_type == 'points':
+            #There are two cases here, a GeoPandas object and a regular table with lat/lon
+            if isinstance(self.state.layer, GeoRegionData):
+                pass
+            else:
+                print("Making marker list")
+                lats = self.state.layer[self.state.lat_att].tolist()
+                lons = self.state.layer[self.state.lon_att].tolist()
+                markers = []
+                for lat,lon in zip(lats,lons):
+                    markers.append(CircleMarker(location=(lat, lon),radius=5, stroke=False))
+                self.layer_artist.layers=markers
+                
         
         self._on_colormap_change()
         #self.mapfigure.substitute_layer(self.layer_artist, self.new_layer_artist)

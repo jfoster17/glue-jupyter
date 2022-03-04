@@ -7,6 +7,11 @@ __all__ = ['MapLayerStateWidget']
 
 class MapLayerStateWidget(v.VuetifyTemplate):
     template = load_template('layer_map.vue', __file__)
+    lon_att_items = traitlets.List().tag(sync=True)
+    lon_att_selected = traitlets.Int(allow_none=True).tag(sync=True)
+    lat_att_items = traitlets.List().tag(sync=True)
+    lat_att_selected = traitlets.Int(allow_none=True).tag(sync=True)
+    
     color_att_items = traitlets.List().tag(sync=True)
     color_att_selected = traitlets.Int(allow_none=True).tag(sync=True)
     colormap_items = traitlets.List().tag(sync=True)
@@ -19,5 +24,7 @@ class MapLayerStateWidget(v.VuetifyTemplate):
         
         self.glue_state = layer_state
         
+        link_glue_choices(self, layer_state, 'lon_att')
+        link_glue_choices(self, layer_state, 'lat_att')
         link_glue_choices(self, layer_state, 'color_att')
         link_glue_choices(self, layer_state, 'colormap')
