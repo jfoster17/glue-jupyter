@@ -71,9 +71,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         
         
         if self.state.layer_type == 'regions':
-            self.layer_artist = ipyleaflet.Choropleth(border_color='black',
-                                                      style={'fillOpacity': 0.5, 'dashArray': '5, 5'},
-                                                      hover_style={'fillOpacity': 0.95},)
+            self.layer_artist = ipyleaflet.GeoJSON()
         else:
             self.layer_artist = ipyleaflet.LayerGroup()
         self.mapfigure.add_layer(self.layer_artist)
@@ -116,13 +114,31 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         #with delay_callback(self, '')
         if self.state.layer_type == 'regions':
         
+            c = np.array(self.state.layer[self.state.color_att].tolist())
+            #if self.state.value_min is None:
+            self.state.value_min = min(c)
+            #if self.state.value_max is None:
+            self.state.value_max = max(c)
+            diff = self.state.value_max-self.state.value_min
+            normalized_vals = (c-self.state.value_min)/diff
+            #mapping =
+            
             gdf = self.state.layer.gdf
-            c = self.state.layer[self.state.color_att].tolist()
-            choro_data = dict(zip([str(x) for x in self.state.layer['Pixel Axis 0 [x]']], c))
-            self.layer_artist.value_min = np.min(c) #I think this does not work on categorical
-            self.layer_artist.value_max = np.max(c)
-            self.layer_artist.choro_data = choro_data
-            self.layer_artist.geo_data = json.loads(gdf.to_json())
+            #c = self.state.layer[self.state.color_att].tolist()
+            mapping = dict(zip([str(x) for x in self.state.layer['Pixel Axis 0 [x]']], normalized_vals))
+            
+            def feature_color(feature):
+                feature_name = feature["id"]
+                return {
+                    'color': 'black',
+                    'fillColor': linear.YlOrRd_04(mapping[feature_name]),
+                }
+            #self.layer_artist.data = gdf
+            #self.layer_artist.value_min = np.min(c) #I think this does not work on categorical
+            #self.layer_artist.value_max = np.max(c)
+            #self.layer_artist.choro_data = choro_data
+            self.layer_artist.data = json.loads(gdf.to_json())
+            self.layer_artist.style_callback=feature_color
 
         elif self.state.layer_type == 'points':
             #There are two cases here, a GeoPandas object and a regular table with lat/lon

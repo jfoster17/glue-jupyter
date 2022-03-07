@@ -111,6 +111,9 @@ class MapLayerState(LayerState):
     
     colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
 
+    value_min = None
+    value_max = None
+
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
             
         super(MapLayerState, self).__init__()
