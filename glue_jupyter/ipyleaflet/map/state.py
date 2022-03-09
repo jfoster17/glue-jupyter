@@ -1,6 +1,6 @@
 import numpy as np
 
-from glue.core import BaseData, Subset
+from glue.core import BaseData, Subset, Data
 
 from echo import delay_callback
 from glue.viewers.common.state import ViewerState, LayerState
@@ -144,15 +144,9 @@ class MapLayerState(LayerState):
         self.layer = layer #This is critical!
         # We distinguish between layers that plot regions and those that plot points
         # Glue can only plot region-type data for datasets stored as GeoData objects
-        if isinstance(self.layer, GeoRegionData):
-            self.layer_type = 'regions'
-            if (self.layer.geometry.geom_type == 'Point').all():
-                self.layer_type = 'points'
-            elif (self.layer.geometry.geom_type == 'LineString').all():
-                self.layer_type = 'lines'
-        else:
-            self.layer_type = 'points'
+        #if isinstance(self.layer, GeoRegionData):
         
+        self._get_geom_type()
         #if self.viewer_state is not None:
         #    self._on_attribute_change()
         #self._on_attribute_change()
@@ -178,12 +172,40 @@ class MapLayerState(LayerState):
         #    print(self.layer)
         #    print(self.color_att_helper._data)
         #    self.c_geo_metadata = self.color_att_helper._data[0].meta['geo']
+        
+    def _get_geom_type(self):
+        if self.layer is not None:
+            #print(f"layer type is: {type(self.layer)}")
+            if isinstance(self.layer, Data):
+                #print(f"geom_type is: {self.layer.geometry.geom_type}")
+                try:
+                    geom_type = self.layer.geometry.geom_type
+                except AttributeError:
+                    self.layer_type = 'points'
+            else:
+                #print(f"geom_type is: {self.layer.data.geometry.geom_type}")
+                try:
+                    geom_type = self.layer.data.geometry.geom_type
+                except AttributeError:
+                    self.layer_type = 'points'
+                
+            try:
+                self.layer_type = 'regions'
+                if (geom_type == 'Point').all():
+                    self.layer_type = 'points'
+                elif (geom_type == 'LineString').all():
+                    self.layer_type = 'lines'
+            except:
+                self.layer_type = 'points'
+            
+        
     def _layer_changed(self, *args):
         if self.layer is not None:
             self.lon_att_helper.set_multiple_data([self.layer])
             self.lat_att_helper.set_multiple_data([self.layer])
             self.color_att_helper.set_multiple_data([self.layer])
             self.name = self.layer.label
+            self._get_geom_type()
         
     def _on_attribute_change(self, *args):
         #print("In _on_attribute_change")

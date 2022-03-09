@@ -73,11 +73,11 @@ class GeoPandasTranslator:
         if isinstance(data_or_subset, Subset):
             #geom = data_or_subset.data.geometry
             centroids = data_or_subset.data._centroid_component_ids #because these are sort of fake coords
-            gdf.crs = data_or_subset.data.meta['crs']
+            crs = data_or_subset.data.meta['crs']
         else:
             #geom = data_or_subset.geometry
             centroids = data_or_subset._centroid_component_ids #because these are sort of fake coords
-            gdf.crs = data_or_subset.meta['crs']
+            crs = data_or_subset.meta['crs']
             
         #gdf.geometry = geom
         for cid in data_or_subset.components:
@@ -87,8 +87,9 @@ class GeoPandasTranslator:
                     gdf[cid.label] = g
                 else:
                     gdf[cid.label] = data_or_subset[cid]
-                    
-        return gdf.set_geometry("geometry")
+        gdf.set_geometry("geometry",inplace=True)
+        gdf.crs = crs
+        return gdf
 
     
     
