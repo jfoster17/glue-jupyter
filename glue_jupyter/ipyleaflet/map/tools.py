@@ -9,6 +9,8 @@ from glue.core.roi import RectangularROI, RangeROI, CircularROI, EllipticalROI, 
 from glue.core.subset import RoiSubsetState
 from glue.config import viewer_tool
 from glue.viewers.common.tool import Tool, CheckableTool
+from glue.core.exceptions import IncompatibleAttribute
+
 import numpy as np
 
 from ipywidgets import CallbackDispatcher
@@ -60,36 +62,50 @@ class PointSelect(CheckableTool):
     def __init__(self, viewer):
         super(PointSelect, self).__init__(viewer)
         self.list_of_region_ids = []
-        
+        print("PointSelect created...")
 
     def activate(self):
         """
-        Capture on click stuff
+        Capture point-select clicks. This is to select regions... 
         """
+        print("PointSelect activated...")
         def on_click(event, feature, **kwargs):
             """On click should immediately add this to a subset.
-            The layer artist can then worry about the coloring."""
+            The layer artist can then worry about the coloring.
+            
+            
+            
+            """
+            print(feature)
             feature_id = feature['id'] #This is the name of features in our geodata
             #print(feature_id)
             
             self.list_of_region_ids.append(feature_id)
-            self.list_of_region_ids = list(set(self.list_of_region_ids))
-            
+            self.list_of_region_ids =  list(set(self.list_of_region_ids))
+            print(self.list_of_region_ids)
             #import pdb; pdb.set_trace()
-            inds = [key for key, val in enumerate(self.viewer.state.layers_data[0]['ids']) if val in self.list_of_region_ids]
+            try:
+                #inds = [key for key, val in enumerate(self.viewer.state.layers_data[0]['ids']) if val in self.list_of_region_ids]
+                int_inds = [int(x) for x in self.list_of_region_ids]
+                subset_state = ElementSubsetState(indices=int_inds)
+                self.viewer.apply_subset_state(subset_state, override_mode=None) #What does override_mode do?
+                print(int_inds)
+                print(subset_state)
+            except IncompatibleAttribute:
+                print("Got an IncompatibleAttribute")
             #print(inds)
-            subset_state = ElementSubsetState(indices=inds)
             #print(subset_state.to_mask(self.viewer.state.layers_data[0]))
-            self.viewer.apply_subset_state(subset_state, override_mode=None) #What does override_mode do?
             #print(feature['id'])
         #Get current? layer geo_json object
         #print(self.viewer.layers[0])
-        geo_json = self.viewer.layers[0].layer_artist
-        geo_json.on_click(on_click)
+        for layer in self.viewer.layers:
+            print(f"Adding on_click to {layer}")
+            layer_artist = layer.layer_artist
+            layer_artist.on_click(on_click)
 
     def deactivate(self):
-        geo_json = self.viewer.layers[0].layer_artist
-        geo_json._click_callbacks = CallbackDispatcher() #This removes all on_click callbacks, but seems to work
+        layer_artist = self.viewer.layers[0].layer_artist
+        layer_artist._click_callbacks = CallbackDispatcher() #This removes all on_click callbacks, but seems to work
         self.list_of_region_ids = [] #We need to trigger this when we switch modes too (to do a new region)
         #print(f"List of Region IDs: {list(set(self.list_of_region_ids))}") #For some reason this adds all regions twice
 

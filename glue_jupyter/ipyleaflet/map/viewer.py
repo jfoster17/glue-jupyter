@@ -1,7 +1,7 @@
 from glue.core.subset import roi_to_subset_state
 from .state import MapViewerState
 
-from .layer_artist import IPyLeafletMapLayerArtist, IPyLeafletMapSubsetLayerArtist
+from .layer_artist import IPyLeafletMapLayerArtist#, IPyLeafletMapSubsetLayerArtist
 from glue_jupyter.common.state_widgets.layer_map import MapLayerStateWidget
 from glue_jupyter.common.state_widgets.viewer_map import MapViewerStateWidget
 
@@ -32,7 +32,7 @@ class IPyLeafletMapView(IPyWidgetView):
     _state_cls = MapViewerState
     _options_cls = MapViewerStateWidget 
     _data_artist_cls = IPyLeafletMapLayerArtist
-    _subset_artist_cls = IPyLeafletMapSubsetLayerArtist
+    _subset_artist_cls = IPyLeafletMapLayerArtist#IPyLeafletMapSubsetLayerArtist
     _layer_style_widget_cls = MapLayerStateWidget
 
     tools = ['ipyleaflet:pointselect','ipyleaflet:rectangleselect']
@@ -47,6 +47,10 @@ class IPyLeafletMapView(IPyWidgetView):
         
         link((self.state, 'zoom_level'), (self.mapfigure, 'zoom'), float_or_none)
         link((self.state, 'center'), (self.mapfigure, 'center'))
+        
+        
+        control = ipyleaflet.LayersControl(position='topright')
+        self.mapfigure.add_control(control)
         #dlink((self.state, 'basemap'), (self.mapfigure, 'basemap')) #map does not actually have a basemap attribute. 
         #We would need to look for layer? changes?
         

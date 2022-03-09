@@ -114,6 +114,7 @@ class MapLayerState(LayerState):
     value_min = None
     value_max = None
 
+    name = "" #Name for display in the 
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
             
         super(MapLayerState, self).__init__()
@@ -141,7 +142,6 @@ class MapLayerState(LayerState):
         
         #print(layer)
         self.layer = layer #This is critical!
-        
         # We distinguish between layers that plot regions and those that plot points
         # Glue can only plot region-type data for datasets stored as GeoData objects
         if isinstance(self.layer, GeoRegionData):
@@ -183,6 +183,7 @@ class MapLayerState(LayerState):
             self.lon_att_helper.set_multiple_data([self.layer])
             self.lat_att_helper.set_multiple_data([self.layer])
             self.color_att_helper.set_multiple_data([self.layer])
+            self.name = self.layer.label
         
     def _on_attribute_change(self, *args):
         #print("In _on_attribute_change")

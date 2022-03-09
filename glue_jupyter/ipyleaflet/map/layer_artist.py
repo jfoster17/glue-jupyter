@@ -20,6 +20,8 @@ import bqplot
 import json 
 
 from glue.core import BaseData
+from glue.core.data import Subset
+
 from glue.core.exceptions import IncompatibleAttribute
 from glue.viewers.common.layer_artist import LayerArtist
 from glue.utils import color2hex
@@ -28,14 +30,14 @@ from ...link import link, dlink
 from .state import MapLayerState, MapSubsetLayerState
 
 
-from ..data import GeoRegionData
+from ..data import GeoRegionData, GeoPandasTranslator
 
 from ipyleaflet.leaflet import LayerException, LayersControl, CircleMarker
 import ipyleaflet
 from branca.colormap import linear
 
 
-__all__ = ['IPyLeafletMapLayerArtist', 'IPyLeafletMapSubsetLayerArtist']
+__all__ = ['IPyLeafletMapLayerArtist']#, 'IPyLeafletMapSubsetLayerArtist']
 
 
 class IPyLeafletMapLayerArtist(LayerArtist):
@@ -47,6 +49,19 @@ class IPyLeafletMapLayerArtist(LayerArtist):
     """
     
     _layer_state_cls = MapLayerState
+    
+    _fake_geo_json = {"type":"FeatureCollection",
+      "features":[{
+          "type":"Feature",
+          "id":"DE",
+          "properties":{"name":"Delaware"},
+          "geometry":{
+              "type":"Polygon",
+              "coordinates":[[[-75.414089,39.804456],[-75.507197,39.683964],[-75.611259,39.61824],[-75.589352,39.459409],[-75.441474,39.311532],[-75.403136,39.065069],[-75.189535,38.807653],[-75.09095,38.796699],[-75.047134,38.451652],[-75.693413,38.462606],[-75.786521,39.722302],[-75.616736,39.831841],[-75.414089,39.804456]]]
+              }
+       }]
+      }
+    
 
     def __init__(self, mapfigure, viewer_state, layer_state=None, layer=None):
 
@@ -63,23 +78,44 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         self.state.add_callback('color_att', self._on_attribute_change)
         self.state.add_callback('lat_att', self._on_attribute_change)
         self.state.add_callback('lon_att', self._on_attribute_change)
-        
         self.state.add_callback('colormap', self._on_colormap_change)
+        self._on_colormap_change()
         print(self.state)
+        
         #choro_data = dict(zip(self.state.layer['ids'].tolist(), 
         #                        self.state.layer[self.state.color_att].tolist()))
         
         
         if self.state.layer_type == 'regions':
-            self.layer_artist = ipyleaflet.GeoJSON()
+            
+            self.layer_artist = ipyleaflet.GeoJSON(data=self._fake_geo_json,
+                                                   style={'fillOpacity': 0.5, 'dashArray': '5, 5', 'weight':0.5},
+                                                   hover_style={'fillOpacity': 0.95}
+                                                )
+            if isinstance(self.layer, Subset):
+                self.layer_artist.border_color= self.layer.subset_state.color
+                self.layer_artist.style.weight= 1
+            #data = self.layer.data
+            #subset_state = self.layer.subset_state
+            
         else:
             self.layer_artist = ipyleaflet.LayerGroup()
+        self.layer_artist.name = self.state.name
+        #Not all layers have a way to make them visible/invisible. 
+        #And the built-in control does something complicated. 
+        #Hard to keep these in sync!
+        #link((self.state,'visible'), (self.layer_artist,'visible'))
         self.mapfigure.add_layer(self.layer_artist)
         
         #self.colormap = 
         #link((self.state, 'colormap'), (self.mapfigure.layers[1], 'colormap')) #We need to keep track of the layer?
         
     def _on_colormap_change(self, value=None):
+        """
+        self.state.colormap is a string
+        self.colormap is the actual colormap object `branca.colormap.LinearColormap` object
+        """
+        
         #print(f'in _on_colormap_change')
         #print(f'state.colormap = {self.state.colormap}')
         #print(f'value = {value}')
@@ -93,7 +129,9 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         except AttributeError:
             print("attribute error")
             colormap = linear.viridis #We need a default
-        self.layer_artist.colormap = colormap
+        print(f"self.colormap is now = {colormap}")
+        self.colormap = colormap
+        #self.layer_artist.colormap = colormap
         self.redraw()
     
     def _on_attribute_change(self, value=None):
@@ -122,16 +160,15 @@ class IPyLeafletMapLayerArtist(LayerArtist):
             diff = self.state.value_max-self.state.value_min
             normalized_vals = (c-self.state.value_min)/diff
             #mapping =
-            
-            gdf = self.state.layer.gdf
+            trans = GeoPandasTranslator()
+            gdf = trans.to_object(self.state.layer)
             #c = self.state.layer[self.state.color_att].tolist()
             mapping = dict(zip([str(x) for x in self.state.layer['Pixel Axis 0 [x]']], normalized_vals))
             
             def feature_color(feature):
                 feature_name = feature["id"]
                 return {
-                    'color': 'black',
-                    'fillColor': linear.YlOrRd_04(mapping[feature_name]),
+                    'fillColor': self.colormap(mapping[feature_name]),
                 }
             #self.layer_artist.data = gdf
             #self.layer_artist.value_min = np.min(c) #I think this does not work on categorical
@@ -152,7 +189,6 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                 for lat,lon in zip(lats,lons):
                     markers.append(CircleMarker(location=(lat, lon),radius=5, stroke=False))
                 self.layer_artist.layers=markers
-                
         
         self._on_colormap_change()
         #self.mapfigure.substitute_layer(self.layer_artist, self.new_layer_artist)
@@ -177,15 +213,15 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         """Req: Re-render the plot."""
         pass
         
-class IPyLeafletMapSubsetLayerArtist(LayerArtist):
-
-    _layer_state_cls = MapSubsetLayerState
-
-    def __init__(self, mapfigure, viewer_state, layer_state=None, layer=None):
-
-        super(IPyLeafletMapSubsetLayerArtist, self).__init__(viewer_state,
-                                                         layer_state=layer_state, layer=layer)
-        self.mapfigure = mapfigure
-        self.layer = layer
-        self.layer_state = layer_state
+#class IPyLeafletMapSubsetLayerArtist(LayerArtist):#
+#
+#    _layer_state_cls = MapSubsetLayerState
+#
+#    def __init__(self, mapfigure, viewer_state, layer_state=None, layer=None):
+#
+#        super(IPyLeafletMapSubsetLayerArtist, self).__init__(viewer_state,
+#                                                         layer_state=layer_state, layer=layer)
+#        self.mapfigure = mapfigure
+#        self.layer = layer
+#        self.layer_state = layer_state
 
