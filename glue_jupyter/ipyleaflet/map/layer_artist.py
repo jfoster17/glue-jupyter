@@ -82,36 +82,13 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         self._on_colormap_change()
         print(self.state)
         
-        #choro_data = dict(zip(self.state.layer['ids'].tolist(), 
-        #                        self.state.layer[self.state.color_att].tolist()))
-        
-        init_color = self.get_layer_color()
-        try:
-            float(init_color)
-        except ValueError:
-            init_color='black'
         if self.state.layer_type == 'regions':
             self.layer_artist = ipyleaflet.GeoJSON(data=self._fake_geo_json,
                                                    style={'fillOpacity': 0.5, 
                                                           'dashArray': '5, 5',
-                                                          'color': init_color,
                                                           'weight':0.5},
                                                    hover_style={'fillOpacity': 0.95}
                                                 )
-            if isinstance(self.layer, Subset):
-                #pass
-                print(f"Layer color is: {self.get_layer_color()}")
-                self.layer_artist.style['color'] = self.get_layer_color()
-                self.layer_artist.style['weight'] = 1
-                self.layer_artist.style['opacity'] = 1
-                self.layer_artist.style['dashArray'] = '0'
-                self.layer_artist.style['fillOpacity'] = 0
-                print("Full layer_artist style")
-                print(self.layer_artist.style)
-                #self.layer_artist.border_color= self.layer.subset_state.style.color
-                #self.layer_artist.style.weight= 1
-            #data = self.layer.data
-            #subset_state = self.layer.subset_state
             
         else:
             self.layer_artist = ipyleaflet.LayerGroup()
@@ -150,8 +127,6 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         self.redraw()
     
     def _on_attribute_change(self, value=None):
-        #if self.state.color_att is None:
-        #    return
         if self.state.color_att is None:
             return
         if isinstance(self.layer, BaseData):
@@ -159,58 +134,43 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         else:
             layer = self.layer.data
         
-        print(f'color_att is {self.state.color_att}')
-    
-        #print(layer.get_kind(self.state.color_att))
-        #if layer.get_kind(self.state.color_att) != 'numerical':
-        #    return
-        
+            
         #with delay_callback(self, '')
         if self.state.layer_type == 'regions':
         
-            #c = np.array(self.state.layer[self.state.color_att].tolist())
-            #print(c)
-            
-            #What is diff between self.layer and self.state.layer? Probably nothing?
             trans = GeoPandasTranslator()
             gdf = trans.to_object(self.layer)
             
-            self.layer_artist.data = json.loads(gdf.to_json())
-            c = np.array(layer[self.state.color_att].tolist()) #First subset crashes unless we do this. Check for empty list?
-            #if self.state.value_min is None:
-            self.state.value_min = min(c)
-            #if self.state.value_max is None:
-            self.state.value_max = max(c)
-            diff = self.state.value_max-self.state.value_min
-            normalized_vals = (c-self.state.value_min)/diff
-            #mapping =
-            #c = self.state.layer[self.state.color_att].tolist()
-            mapping = dict(zip([str(x) for x in layer['Pixel Axis 0 [x]']], normalized_vals)) #layer should probably go back to self.state.layer
-            
-            def feature_color(feature):
-                feature_name = feature["id"]
-                if isinstance(self.layer, Subset):
-                    style_dict = {
-                        #'fillColor': self.colormap(mapping[feature_name]),
-                        'fillOpacity': 0,
-                        'weight': 2,
-                        'color': self.get_layer_color(),
-                    }
-                    print(f"style_dict inside of feature_color: {style_dict}")
-                    return style_dict
-                    
-                else:
-                    style_dict = {
-                        'fillColor': self.colormap(mapping[feature_name]),
-                    }
-                    print(f"style_dict inside of feature_color: {style_dict}")
-                    return style_dict
-            #self.layer_artist.data = gdf
-            #self.layer_artist.value_min = np.min(c) #I think this does not work on categorical
-            #self.layer_artist.value_max = np.max(c)
-            #self.layer_artist.choro_data = choro_data
-            
-            self.layer_artist.style_callback=feature_color
+            if isinstance(self.layer, Subset):
+                new_layer_artist = ipyleaflet.GeoJSON(data=json.loads(gdf.to_json()),
+                                                       style={'fillOpacity': 0.5, 
+                                                              'dashArray': '0',
+                                                              'color': self.get_layer_color(),
+                                                              'weight':2},
+                                                       hover_style={'fillOpacity': 0.95},
+                                                    )
+            else:
+                c = np.array(layer[self.state.color_att].tolist())
+                self.state.value_min = min(c)
+                self.state.value_max = max(c)
+                diff = self.state.value_max-self.state.value_min
+                normalized_vals = (c-self.state.value_min)/diff
+                mapping = dict(zip([str(x) for x in layer['Pixel Axis 0 [x]']], normalized_vals)) 
+                
+                def feature_color(feature):
+                    feature_name = feature["id"]
+                    return {'fillColor': self.colormap(mapping[feature_name])}
+                
+                new_layer_artist = ipyleaflet.GeoJSON(data=json.loads(gdf.to_json()),
+                                               style={'fillOpacity': 0.5, 
+                                                      'dashArray': '5, 5',
+                                                      'weight':0.5},
+                                               hover_style={'fillOpacity': 0.95},
+                                               style_callback = feature_color,
+                                            )
+            new_layer_artist.name = self.state.name
+            self.mapfigure.substitute_layer(self.layer_artist, new_layer_artist) #Swapping out the full layer seems to work better than updating attributes. Which is a bit unfortunate since it means we have more work to keep state attributes in sync
+            self.layer_artist = new_layer_artist
 
         elif self.state.layer_type == 'points':
             #There are two cases here, a GeoPandas object and a regular table with lat/lon
@@ -225,7 +185,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                     markers.append(CircleMarker(location=(lat, lon),radius=5, stroke=False))
                 self.layer_artist.layers=markers
         
-        self._on_colormap_change()
+        #self._on_colormap_change()
         #self.mapfigure.substitute_layer(self.layer_artist, self.new_layer_artist)
         #Update zoom and center?
         

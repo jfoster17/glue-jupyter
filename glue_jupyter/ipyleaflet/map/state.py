@@ -104,10 +104,10 @@ class MapLayerState(LayerState):
     
     color_steps (whether to turn a continuous variable into a stepped display) <-- less important
     """
-    lat_att = SelectionCallbackProperty(default_index=1, docstring='The attribute to display as latitude')
-    lon_att = SelectionCallbackProperty(default_index=2, docstring='The attribute to display as longitude')
     
     color_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
+    lon_att = SelectionCallbackProperty(default_index=-2, docstring='The attribute to display as longitude')
+    lat_att = SelectionCallbackProperty(default_index=-3, docstring='The attribute to display as latitude')
     
     colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
 
@@ -124,7 +124,7 @@ class MapLayerState(LayerState):
         
         self.lon_att_helper = ComponentIDComboHelper(self, 'lon_att', numeric=True,
                                                     pixel_coord=True, world_coord=True, datetime=False, categorical=False)
-        self.color_att_helper = ComponentIDComboHelper(self, 'color_att', numeric=True)
+        self.color_att_helper = ComponentIDComboHelper(self, 'color_att', numeric=True, categorical=False)
         
         #To be fancy we should determine the type of color_att and set the colormap choices based on that
         #Except ipyleaflet seems to have a limited set of colormaps -- and are any categorical?
