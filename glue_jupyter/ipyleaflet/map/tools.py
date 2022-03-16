@@ -62,7 +62,7 @@ class PointSelect(CheckableTool):
     def __init__(self, viewer):
         super(PointSelect, self).__init__(viewer)
         self.list_of_region_ids = []
-        print("PointSelect created...")
+        #print("PointSelect created...")
 
     def activate(self):
         """

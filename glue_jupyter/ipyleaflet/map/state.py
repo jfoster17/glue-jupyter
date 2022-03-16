@@ -28,9 +28,15 @@ class MapViewerState(ViewerState):
     which serves as the base for a MapViewer.    
     """
 
-    center = CallbackProperty((40,-100),docstring='(Lon, Lat) at the center of the map')
-    zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
-    basemap = CallbackProperty(basemaps.OpenStreetMap.Mapnik, docstring='Basemap to display')
+    #center = CallbackProperty((40,-100),docstring='(Lon, Lat) at the center of the map')
+    #zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
+    
+    center = CallbackProperty((42.361145, -71.057083),docstring='(Lon, Lat) at the center of the map')
+    zoom_level = CallbackProperty(7, docstring='Zoom level for the map')
+    
+    #basemap = CallbackProperty(basemaps.OpenStreetMap.Mapnik, docstring='Basemap to display')
+
+    basemap = CallbackProperty(basemaps.Esri.WorldImagery)
 
     def __init__(self, **kwargs):
 
@@ -40,7 +46,7 @@ class MapViewerState(ViewerState):
         #self.add_callback('basemap', self._basemap_changed)
         #self.add_callback('basemap', self._basemap_changed)
         #print(f'layers={self.layers}')
-        print("Trying to update_from_dict...")
+        #print("Trying to update_from_dict...")
         self.update_from_dict(kwargs)
 
         #self.mapfigure = None
@@ -106,13 +112,15 @@ class MapLayerState(LayerState):
     """
     
     color_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
-    lon_att = SelectionCallbackProperty(default_index=-2, docstring='The attribute to display as longitude')
-    lat_att = SelectionCallbackProperty(default_index=-3, docstring='The attribute to display as latitude')
+    lon_att = SelectionCallbackProperty(default_index=1, docstring='The attribute to display as longitude') #HACK! Subset state should get this from LayerState
+    lat_att = SelectionCallbackProperty(default_index=2, docstring='The attribute to display as latitude')
     
     colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
 
     value_min = None
     value_max = None
+    
+    color = None
 
     name = "" #Name for display in the 
     def __init__(self, layer=None, viewer_state=None, **kwargs): #Calling this init is fubar
@@ -133,7 +141,7 @@ class MapLayerState(LayerState):
         self.colormap_helper.choices = ['viridis','YlOrRd_04','PuBuGn_04','PuOr_04','Purples_09','YlGnBu_09','Blues_08','PuRd_06']
         self.colormap_helper.selection = 'viridis'
         #self.add_callback('color_att', self._on_attribute_change)
-
+        
         self.add_callback('layer', self._layer_changed)
 
         #self.cmap = 'viridis'#colormaps.members[0][1]
@@ -222,11 +230,11 @@ class MapLayerState(LayerState):
     def viewer_state(self, viewer_state):
         self._viewer_state = viewer_state
 
-class MapSubsetLayerState(LayerState):
-    """
-    Currently this does not do anything
-    """
-    def __init__(self, *args, **kwargs):
-    #self.uuid = str(uuid.uuid4())
-        super(MapSubsetLayerState, self).__init__(*args, **kwargs)
+#class MapSubsetLayerState(LayerState):
+#    """
+#    Currently this does not do anything
+#    """
+#    def __init__(self, *args, **kwargs):
+#    #self.uuid = str(uuid.uuid4())
+#        super(MapSubsetLayerState, self).__init__(*args, **kwargs)
     

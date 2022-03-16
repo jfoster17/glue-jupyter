@@ -196,7 +196,7 @@ class JupyterApplication(Application):
         view.layers[0].state.update_from_dict(layer_state)
         return view
 
-    def map(self, *, data=None, color=None, lat=None, lon=None, zoom_level=None, center=None, basemap=None,
+    def map(self, *, data=None, color=None, color_att=None, lat=None, lon=None, zoom_level=None, center=None, basemap=None,
             colormap=None, viewer_state=None,
             layer_state=None, show=True):
         from .ipyleaflet.map import IPyLeafletMapView
@@ -227,10 +227,11 @@ class JupyterApplication(Application):
             layer_state_obj.color_att_helper.append_data(data)
         
         layer_state = layer_state or {}
-        _update_not_none(layer_state, colormap=colormap)
+        _update_not_none(layer_state, colormap=colormap, color=color)
         
-        if color is not None:
-            layer_state['color_att'] = data.id[color]
+        print(layer_state)
+        if color_att is not None:
+            layer_state['color_att'] = data.id[color_att]
         if lat is not None:
             layer_state['lat_att'] = data.id[lat]
         if lon is not None:

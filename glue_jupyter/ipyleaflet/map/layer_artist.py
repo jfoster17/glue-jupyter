@@ -27,7 +27,7 @@ from glue.viewers.common.layer_artist import LayerArtist
 from glue.utils import color2hex
 
 from ...link import link, dlink
-from .state import MapLayerState, MapSubsetLayerState
+from .state import MapLayerState#, MapSubsetLayerState
 
 
 from ..data import GeoRegionData, GeoPandasTranslator
@@ -36,6 +36,7 @@ from ipyleaflet.leaflet import LayerException, LayersControl, CircleMarker
 import ipyleaflet
 from branca.colormap import linear
 
+from glue.utils import defer_draw, color2hex
 
 __all__ = ['IPyLeafletMapLayerArtist']#, 'IPyLeafletMapSubsetLayerArtist']
 
@@ -80,7 +81,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         self.state.add_callback('lon_att', self._on_attribute_change)
         self.state.add_callback('colormap', self._on_colormap_change)
         self._on_colormap_change()
-        print(self.state)
+        #print(self.state)
         
         if self.state.layer_type == 'regions':
             self.layer_artist = ipyleaflet.GeoJSON(data=self._fake_geo_json,
@@ -121,7 +122,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         except AttributeError:
             print("attribute error")
             colormap = linear.viridis #We need a default
-        print(f"self.colormap is now = {colormap}")
+        #print(f"self.colormap is now = {colormap}")
         self.colormap = colormap
         #self.layer_artist.colormap = colormap
         self.redraw()
@@ -146,7 +147,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                                                        style={'fillOpacity': 0.5, 
                                                               'dashArray': '0',
                                                               'color': self.get_layer_color(),
-                                                              'weight':2},
+                                                              'weight':3},
                                                        hover_style={'fillOpacity': 0.95},
                                                     )
             else:
@@ -174,16 +175,33 @@ class IPyLeafletMapLayerArtist(LayerArtist):
 
         elif self.state.layer_type == 'points':
             #There are two cases here, a GeoPandas object and a regular table with lat/lon
+            print("Inside layer_type == points")
             if isinstance(self.state.layer, GeoRegionData):
                 pass
             else:
-                print("Making marker list")
+                #print("Clearing layers")
+                #self.layer_artist.clear_layers()
+                #print("Making marker list")
                 lats = self.state.layer[self.state.lat_att].tolist()
                 lons = self.state.layer[self.state.lon_att].tolist()
+                in_color = self.get_layer_color()
+                #print(in_color)
+                try: #Ugly hack to make the starting points white. 
+                    float(in_color)
+                    in_color = 'white'
+                except:
+                    pass
+                color = color2hex(in_color)
+                #print(color)
                 markers = []
                 for lat,lon in zip(lats,lons):
-                    markers.append(CircleMarker(location=(lat, lon),radius=5, stroke=False))
-                self.layer_artist.layers=markers
+                    markers.append(CircleMarker(location=(lat, lon),radius=2, stroke=False, fill_color=color, fill_opacity=0.7))#, weight=1, color='#FFFFFF'))
+                print("Markers made")
+                #if isinstance(self.layer, Subset):
+                #    print(f"Plotting a subset of {len(lats)}")
+                    #print(markers)
+                self.layer_artist.layers = markers
+            
         
         #self._on_colormap_change()
         #self.mapfigure.substitute_layer(self.layer_artist, self.new_layer_artist)

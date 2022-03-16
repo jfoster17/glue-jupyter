@@ -43,13 +43,13 @@ class IPyLeafletMapView(IPyWidgetView):
         #print("Inside init for the viewer")
         super(IPyLeafletMapView, self).__init__(session, state=state)
         
-        self.mapfigure = ipyleaflet.Map(basemap=self.state.basemap)
+        self.mapfigure = ipyleaflet.Map(basemap=self.state.basemap, prefer_canvas=True)
         
         link((self.state, 'zoom_level'), (self.mapfigure, 'zoom'), float_or_none)
         link((self.state, 'center'), (self.mapfigure, 'center'))
         
         
-        control = ipyleaflet.LayersControl(position='topright')
+        control = ipyleaflet.LayersControl(position='bottomleft')
         self.mapfigure.add_control(control)
         #dlink((self.state, 'basemap'), (self.mapfigure, 'basemap')) #map does not actually have a basemap attribute. 
         #We would need to look for layer? changes?
