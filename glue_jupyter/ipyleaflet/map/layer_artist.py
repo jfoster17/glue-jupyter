@@ -32,7 +32,7 @@ from .state import MapLayerState#, MapSubsetLayerState
 
 from ..data import GeoRegionData, GeoPandasTranslator
 
-from ipyleaflet.leaflet import LayerException, LayersControl, CircleMarker
+from ipyleaflet.leaflet import LayerException, LayersControl, CircleMarker, Heatmap
 import ipyleaflet
 from branca.colormap import linear
 
@@ -175,15 +175,15 @@ class IPyLeafletMapLayerArtist(LayerArtist):
 
         elif self.state.layer_type == 'points':
             #There are two cases here, a GeoPandas object and a regular table with lat/lon
-            print("Inside layer_type == points")
+            #print("Inside layer_type == points")
             if isinstance(self.state.layer, GeoRegionData):
                 pass
             else:
                 #print("Clearing layers")
                 #self.layer_artist.clear_layers()
                 #print("Making marker list")
-                lats = self.state.layer[self.state.lat_att].tolist()
-                lons = self.state.layer[self.state.lon_att].tolist()
+                lats = self.state.layer[self.state.lat_att]
+                lons = self.state.layer[self.state.lon_att]
                 in_color = self.get_layer_color()
                 #print(in_color)
                 try: #Ugly hack to make the starting points white. 
@@ -193,14 +193,25 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                     pass
                 color = color2hex(in_color)
                 #print(color)
-                markers = []
-                for lat,lon in zip(lats,lons):
-                    markers.append(CircleMarker(location=(lat, lon),radius=2, stroke=False, fill_color=color, fill_opacity=0.7))#, weight=1, color='#FFFFFF'))
-                print("Markers made")
+                small = True
+                if small:
+                    markers = []
+                    for lat,lon in zip(lats,lons):
+                        markers.append(CircleMarker(location=(lat, lon),radius=2, stroke=False, fill_color=color, fill_opacity=0.7))#, weight=1, color='#FFFFFF'))
+                    #print("Markers made")
+                    self.layer_artist.layers = markers
+                else:
+                    #Fast, and generally good, but color options on heatmap are very limited
+                    locs = list(zip(lats,lons))
+                    new_layer_artist = Heatmap(locations=locs, radius=2, blur=1, min_opacity=0.5)
+                    #print("Heatmap made")
+                    self.mapfigure.substitute_layer(self.layer_artist, new_layer_artist)
+                    self.layer_artist = new_layer_artist
+                    
                 #if isinstance(self.layer, Subset):
                 #    print(f"Plotting a subset of {len(lats)}")
                     #print(markers)
-                self.layer_artist.layers = markers
+                
             
         
         #self._on_colormap_change()

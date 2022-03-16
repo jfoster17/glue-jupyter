@@ -229,7 +229,7 @@ class JupyterApplication(Application):
         layer_state = layer_state or {}
         _update_not_none(layer_state, colormap=colormap, color=color)
         
-        print(layer_state)
+        #print(layer_state)
         if color_att is not None:
             layer_state['color_att'] = data.id[color_att]
         if lat is not None:
