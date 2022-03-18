@@ -193,7 +193,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                     pass
                 color = color2hex(in_color)
                 #print(color)
-                small = True
+                small = False
                 if small:
                     markers = []
                     for lat,lon in zip(lats,lons):
@@ -203,7 +203,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                 else:
                     #Fast, and generally good, but color options on heatmap are very limited
                     locs = list(zip(lats,lons))
-                    new_layer_artist = Heatmap(locations=locs, radius=2, blur=1, min_opacity=0.5)
+                    new_layer_artist = Heatmap(locations=locs, radius=2, blur=1, min_opacity=0.5, gradient={0:color,1:color})
                     #print("Heatmap made")
                     self.mapfigure.substitute_layer(self.layer_artist, new_layer_artist)
                     self.layer_artist = new_layer_artist

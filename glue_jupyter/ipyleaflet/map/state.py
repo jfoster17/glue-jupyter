@@ -15,6 +15,7 @@ from ipyleaflet import Map, basemaps, basemap_to_tiles
 
 from glue.config import colormaps
 from branca.colormap import linear
+from glue.core.data import Subset
 
 from ..data import GeoRegionData
 
@@ -165,7 +166,9 @@ class MapLayerState(LayerState):
         #    self._update_attribute()
         #self.c_geo_metadata = None
        # self.update_from_dict(kwargs)
-        
+        if isinstance(layer, Subset):
+            #print("Layer is a Subset")
+            self.name = f"{self.name} {(self.layer.data.label)}"
         
         #self.ids = self.layer['ids']
 
