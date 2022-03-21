@@ -6,7 +6,7 @@ from glue.core.subset import ElementSubsetState
 from glue.core.edit_subset_mode import AndMode
 
 from glue.core.roi import RectangularROI, RangeROI, CircularROI, EllipticalROI, PolygonalROI
-from glue.core.subset import RoiSubsetState
+from glue.core.subset import RoiSubsetState, MultiOrState
 from glue.config import viewer_tool
 from glue.viewers.common.tool import Tool, CheckableTool
 from glue.core.exceptions import IncompatibleAttribute
@@ -76,10 +76,10 @@ class PointSelect(CheckableTool):
             
             
             """
-            print(feature)
+            #print(feature)
             feature_id = feature['id'] #This is the name of features in our geodata
             #print(feature_id)
-            
+            # List of region_ids should start with the current subset (how to get this?)
             self.list_of_region_ids.append(feature_id)
             self.list_of_region_ids =  list(set(self.list_of_region_ids))
             print(self.list_of_region_ids)
@@ -87,10 +87,32 @@ class PointSelect(CheckableTool):
             try:
                 #inds = [key for key, val in enumerate(self.viewer.state.layers_data[0]['ids']) if val in self.list_of_region_ids]
                 int_inds = [int(x) for x in self.list_of_region_ids]
-                subset_state = ElementSubsetState(indices=int_inds)
-                self.viewer.apply_subset_state(subset_state, override_mode=None) #What does override_mode do?
+                # Assume we are trying to interact with the top layer
+                target_layer = self.viewer.layers[0].layer #This is just the bottom layer -- we need to think about how to get this properly
+                #print(target_layer)
+                # Get Geo geometries for these indices
+                try:
+                    region_geometries = target_layer.geometry[int_inds].explode(index_parts=False) #Expand multi-polygons to single polygons
+                except AttributeError: #If there is not a geometry column defined, then what do we do?
+                    pass
+                    
+                subset_states = []
+                for region in region_geometries:
+                    lons,lats = region.boundary.coords.xy
+                    roi = PolygonalROI(vx=lons, vy =lats)
+                    subset_state = RoiSubsetState(xatt=target_layer._centroid_component_ids[1],
+                                                  yatt=target_layer._centroid_component_ids[0],
+                                                  roi=roi)
+                    subset_states.append(subset_state)
+                #union = region_geometries.unary_union
+                # Do a unary_union on these geometries
+                # Convert to a glue-like ROI (bounds?). Could be a performance limitation?
+                # subset_state = RoiSubsetState(xatt = centroid_lon, y_att=centroid_lat, roi=roi_from_above)
+                # We need to have centroid_lon and centroid_lat well defined...
+                final_subset_state = MultiOrState(subset_states)
+                self.viewer.apply_subset_state(final_subset_state, override_mode=None) #What does override_mode do?
                 print(int_inds)
-                print(subset_state)
+                print(final_subset_state)
             except IncompatibleAttribute:
                 print("Got an IncompatibleAttribute")
             #print(inds)
@@ -98,7 +120,8 @@ class PointSelect(CheckableTool):
             #print(feature['id'])
         #Get current? layer geo_json object
         #print(self.viewer.layers[0])
-        for layer in self.viewer.layers:
+        for layer in self.viewer.layers: #Perhaps we do not want to do this for every layer, but only the top one? 
+        #That could become confusing in the case where we have multiple non-overlapping layers...
             print(f"Adding on_click to {layer}")
             layer_artist = layer.layer_artist
             layer_artist.on_click(on_click)

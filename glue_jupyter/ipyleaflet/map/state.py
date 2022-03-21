@@ -32,8 +32,8 @@ class MapViewerState(ViewerState):
     #center = CallbackProperty((40,-100),docstring='(Lon, Lat) at the center of the map')
     #zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
     
-    center = CallbackProperty((42.361145, -71.057083),docstring='(Lon, Lat) at the center of the map')
-    zoom_level = CallbackProperty(7, docstring='Zoom level for the map')
+    center = CallbackProperty((40, -100),docstring='(Lon, Lat) at the center of the map')
+    zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
     
     #basemap = CallbackProperty(basemaps.OpenStreetMap.Mapnik, docstring='Basemap to display')
 
@@ -113,8 +113,8 @@ class MapLayerState(LayerState):
     """
     
     color_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
-    lon_att = SelectionCallbackProperty(default_index=1, docstring='The attribute to display as longitude') #HACK! Subset state should get this from LayerState
-    lat_att = SelectionCallbackProperty(default_index=2, docstring='The attribute to display as latitude')
+    lon_att = SelectionCallbackProperty(docstring='The attribute to display as longitude') #HACK! Subset state should get this from LayerState... somehow. Vanilla viewers put this in viewer state. Maybe we should too? If not, we need to find a way to make either this layerstate or a dedicated subsetlayerstate that inherits lon/lat att from parent (and synce it?)
+    lat_att = SelectionCallbackProperty(docstring='The attribute to display as latitude')
     
     colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
 

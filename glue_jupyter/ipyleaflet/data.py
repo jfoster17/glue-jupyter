@@ -35,7 +35,7 @@ class GeoRegionData(Data):
         #self.coordinate_componenets = []
         if isinstance(data, geopandas.GeoSeries) or isinstance(data, geopandas.GeoDataFrame):
             self.geometry = None
-            self.centroids = data.centroid
+            self.centroids = data.representative_point() #Naming of centroid is a bit misleading, but easier than representative point
             #self.add_component(self.centroids.y,label='Centroid '+data.crs.axis_info[1].name)
             if isinstance(data, geopandas.GeoDataFrame):
                 self.geometry = data.geometry    
@@ -49,9 +49,9 @@ class GeoRegionData(Data):
                 #comp = CoordinateComponent(self, i, world=True)
                 label = 'Centroid '+ data.crs.axis_info[i].name
                 if i == 0:
-                    cid = self.add_component(self.centroids.x,label=label)
-                elif i == 1:
                     cid = self.add_component(self.centroids.y,label=label)
+                elif i == 1:
+                    cid = self.add_component(self.centroids.x,label=label)
                 self._centroid_component_ids.append(cid)
             
         else:

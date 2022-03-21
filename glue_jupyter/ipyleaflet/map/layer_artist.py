@@ -174,6 +174,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
             self.layer_artist = new_layer_artist
 
         elif self.state.layer_type == 'points':
+            #print(self)
             #There are two cases here, a GeoPandas object and a regular table with lat/lon
             #print("Inside layer_type == points")
             if isinstance(self.state.layer, GeoRegionData):
@@ -193,7 +194,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                     pass
                 color = color2hex(in_color)
                 #print(color)
-                small = False
+                small = True
                 if small:
                     markers = []
                     for lat,lon in zip(lats,lons):
@@ -230,6 +231,7 @@ class IPyLeafletMapLayerArtist(LayerArtist):
     
     def update(self):
         """Req: Update appearance of the layer before redrawing. Called when a subset is changed."""
+        #print(f"Update called for {self}")
         self._on_attribute_change()
         self.redraw()
                 
