@@ -41,8 +41,8 @@ class MapViewerState(ViewerState):
     center = CallbackProperty((40, -100),docstring='(Lon, Lat) at the center of the map')
     zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
     
-    lon_att = SelectionCallbackProperty(docstring='The attribute to display as longitude')
-    lat_att = SelectionCallbackProperty(docstring='The attribute to display as latitude')
+    lon_att = SelectionCallbackProperty(default_index=1, docstring='The attribute to display as longitude')
+    lat_att = SelectionCallbackProperty(default_index=0, docstring='The attribute to display as latitude')
     
     
     #basemap = CallbackProperty(basemaps.OpenStreetMap.Mapnik, docstring='Basemap to display')
