@@ -74,11 +74,12 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         #if self._viewer_state.map is None: #If we pass in a layer state
         #    self._viewer_state.map = map
         self.layer=layer
+        self._viewer_state = viewer_state
         #self.layer_state = layer_state
         self.mapfigure = mapfigure
         self.state.add_callback('color_att', self._on_attribute_change)
-        self.state.add_callback('lat_att', self._on_attribute_change)
-        self.state.add_callback('lon_att', self._on_attribute_change)
+        self._viewer_state.add_callback('lat_att', self._on_attribute_change)
+        self._viewer_state.add_callback('lon_att', self._on_attribute_change)
         self.state.add_callback('colormap', self._on_colormap_change)
         self._on_colormap_change()
         #print(self.state)
@@ -139,6 +140,8 @@ class IPyLeafletMapLayerArtist(LayerArtist):
         #with delay_callback(self, '')
         if self.state.layer_type == 'regions':
         
+            # XX TODO XX -- We need to verify that we should be plotting this
+            # i.e. that the lat/lon attributes are appropriately linked/set
             trans = GeoPandasTranslator()
             gdf = trans.to_object(self.layer)
             
@@ -183,8 +186,8 @@ class IPyLeafletMapLayerArtist(LayerArtist):
                 #print("Clearing layers")
                 #self.layer_artist.clear_layers()
                 #print("Making marker list")
-                lats = self.state.layer[self.state.lat_att]
-                lons = self.state.layer[self.state.lon_att]
+                lats = self.state.layer[self._viewer_state.lat_att]
+                lons = self.state.layer[self._viewer_state.lon_att]
                 in_color = self.get_layer_color()
                 #print(in_color)
                 try: #Ugly hack to make the starting points white. 

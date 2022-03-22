@@ -196,7 +196,9 @@ class JupyterApplication(Application):
         view.layers[0].state.update_from_dict(layer_state)
         return view
 
-    def map(self, *, data=None, color=None, color_att=None, lat=None, lon=None, zoom_level=None, center=None, basemap=None,
+    def map(self, *, data=None, zoom_level=None, center=None,
+            basemap=None, lon=None, lat=None,  
+            color=None, color_att=None, 
             colormap=None, viewer_state=None,
             layer_state=None, show=True):
         from .ipyleaflet.map import IPyLeafletMapView
@@ -205,21 +207,18 @@ class JupyterApplication(Application):
         data = validate_data_argument(self.data_collection, data)
         
         viewer_state_obj = viewer_cls._state_cls()
-        #viewer_state_obj.color_att_helper.append_data(data) #the viewer state no longer has this attribute helper, but we still to put this data in somehow
-        viewer_state = viewer_state or {}
+        viewer_state_obj.lon_att_helper.append_data(data)
+        viewer_state_obj.lat_att_helper.append_data(data)
         
-        #print(f'data = {data}')
-        #print(f'c = {c}')
+        viewer_state = viewer_state or {}
+        if lat is not None:
+            viewer_state['lat_att'] = data.id[lat]
+        if lon is not None:
+            viewer_state['lon_att'] = data.id[lon]
+        
         _update_not_none(viewer_state, zoom_level=zoom_level, center=center, basemap=basemap)
         viewer_state_obj.update_from_dict(viewer_state)
-        #print(viewer_state_obj)
-        #If we pass data we need to make our viewer have a layer before we can call this
-        #How does this normally happen?
-        #How do we get layers into a viewer?
-        #Maybe when we add data we get an artist layer?
-        #Yes! Add data function 
-        
-        #print(data)
+
         if data is not None:
             from .ipyleaflet.map import IPyLeafletMapLayerArtist
             layer_artist_cls = IPyLeafletMapLayerArtist
@@ -232,16 +231,9 @@ class JupyterApplication(Application):
         #print(layer_state)
         if color_att is not None:
             layer_state['color_att'] = data.id[color_att]
-        if lat is not None:
-            layer_state['lat_att'] = data.id[lat]
-        if lon is not None:
-            layer_state['lon_att'] = data.id[lon]
-        #import sys
-        #sys.exit(1)
         view = self.new_data_viewer(viewer_cls, data=data,
                                     state=viewer_state_obj, show=show)
                                         
-            #print(f'layer_state={layer_state}')
         if layer_state:
             view.layers[0].state.update_from_dict(layer_state)
         return view

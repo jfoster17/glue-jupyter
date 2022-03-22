@@ -32,7 +32,7 @@ class IPyLeafletMapView(IPyWidgetView):
     _state_cls = MapViewerState
     _options_cls = MapViewerStateWidget 
     _data_artist_cls = IPyLeafletMapLayerArtist
-    _subset_artist_cls = IPyLeafletMapLayerArtist#IPyLeafletMapSubsetLayerArtist
+    _subset_artist_cls = IPyLeafletMapLayerArtist
     _layer_style_widget_cls = MapLayerStateWidget
 
     tools = ['ipyleaflet:pointselect','ipyleaflet:rectangleselect']

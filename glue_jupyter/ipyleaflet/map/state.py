@@ -26,7 +26,13 @@ class MapViewerState(ViewerState):
     """
     A state class that manages the display of an ipyleaflet Map object:
     https://ipyleaflet.readthedocs.io/en/latest/api_reference/map.html
-    which serves as the base for a MapViewer.    
+    which serves as the base for a MapViewer.
+    
+    lat_att : `~glue.core.component_id.ComponentID`
+        The attribute to display as latitude. For choropleth-type data this is a special coordinate component.
+    lon_att : `~glue.core.component_id.ComponentID`
+        The attribute to display as longitude. For choropleth-type data this is a special coordinate component.
+    
     """
 
     #center = CallbackProperty((40,-100),docstring='(Lon, Lat) at the center of the map')
@@ -35,6 +41,10 @@ class MapViewerState(ViewerState):
     center = CallbackProperty((40, -100),docstring='(Lon, Lat) at the center of the map')
     zoom_level = CallbackProperty(4, docstring='Zoom level for the map')
     
+    lon_att = SelectionCallbackProperty(docstring='The attribute to display as longitude')
+    lat_att = SelectionCallbackProperty(docstring='The attribute to display as latitude')
+    
+    
     #basemap = CallbackProperty(basemaps.OpenStreetMap.Mapnik, docstring='Basemap to display')
 
     basemap = CallbackProperty(basemaps.Esri.WorldImagery)
@@ -42,7 +52,21 @@ class MapViewerState(ViewerState):
     def __init__(self, **kwargs):
 
         super(MapViewerState, self).__init__()
-
+        self.lat_att_helper = ComponentIDComboHelper(self, 'lat_att', 
+                                                    numeric=True,
+                                                    pixel_coord=True, 
+                                                    world_coord=True, 
+                                                    datetime=False, 
+                                                    categorical=False)
+        
+        self.lon_att_helper = ComponentIDComboHelper(self, 'lon_att', 
+                                                    numeric=True,
+                                                    pixel_coord=True, 
+                                                    world_coord=True, 
+                                                    datetime=False, 
+                                                    categorical=False)
+        
+        
         self.add_callback('layers', self._layers_changed)
         #self.add_callback('basemap', self._basemap_changed)
         #self.add_callback('basemap', self._basemap_changed)
@@ -78,15 +102,8 @@ class MapViewerState(ViewerState):
 
     @defer_draw
     def _layers_changed(self, *args):
-        #print(f'layers={self.layers}')
-        #print(f'layers={self.layers_data}')
-        #print("Layers have changed!")
-        #print(args)
-        pass
-        #self.color_att_helper.set_multiple_data(self.layers_data)
-        #print(self.color_att_helper)
-        #print(self.color_att_helper._data)
-        #self.c_geo_metadata = self.color_att_helper._data[0].meta['geo']
+        self.lon_att_helper.set_multiple_data(self.layers_data)
+        self.lat_att_helper.set_multiple_data(self.layers_data)
 
 
 class MapLayerState(LayerState):
@@ -98,10 +115,6 @@ class MapLayerState(LayerState):
     
     Parameters
     ----------
-    lat_att : `~glue.core.component_id.ComponentID`
-        The attribute to display as latitude. For choropleth-type data this is a special coordinate component.
-    lon_att : `~glue.core.component_id.ComponentID`
-        The attribute to display as longitude. For choropleth-type data this is a special coordinate component.
     color_att : `~glue.core.component_id.ComponentID`
         The values of this attribute determine the color of points or regions
     colormap : string
@@ -113,8 +126,6 @@ class MapLayerState(LayerState):
     """
     
     color_att = SelectionCallbackProperty(docstring='The attribute to display as a choropleth')
-    lon_att = SelectionCallbackProperty(docstring='The attribute to display as longitude') #HACK! Subset state should get this from LayerState... somehow. Vanilla viewers put this in viewer state. Maybe we should too? If not, we need to find a way to make either this layerstate or a dedicated subsetlayerstate that inherits lon/lat att from parent (and synce it?)
-    lat_att = SelectionCallbackProperty(docstring='The attribute to display as latitude')
     
     colormap = SelectionCallbackProperty(docstring='Colormap used to display this layer')
 
@@ -128,11 +139,6 @@ class MapLayerState(LayerState):
             
         super(MapLayerState, self).__init__()
         
-        self.lat_att_helper = ComponentIDComboHelper(self, 'lat_att', numeric=True,
-                                                    pixel_coord=True, world_coord=True, datetime=False, categorical=False)
-        
-        self.lon_att_helper = ComponentIDComboHelper(self, 'lon_att', numeric=True,
-                                                    pixel_coord=True, world_coord=True, datetime=False, categorical=False)
         self.color_att_helper = ComponentIDComboHelper(self, 'color_att', numeric=True, categorical=False)
         
         #To be fancy we should determine the type of color_att and set the colormap choices based on that
@@ -212,8 +218,6 @@ class MapLayerState(LayerState):
         
     def _layer_changed(self, *args):
         if self.layer is not None:
-            self.lon_att_helper.set_multiple_data([self.layer])
-            self.lat_att_helper.set_multiple_data([self.layer])
             self.color_att_helper.set_multiple_data([self.layer])
             self.name = self.layer.label
             self._get_geom_type()
