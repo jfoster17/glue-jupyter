@@ -15,6 +15,9 @@ import numpy as np
 
 from ipywidgets import CallbackDispatcher
 from traitlets import Instance
+
+from ipyleaflet import Rectangle
+import time
 __all__ = []
 
 ICON_WIDTH = 20
@@ -50,7 +53,7 @@ class IpyLeafletSelectionTool(InteractCheckableTool):
         super().activate()
 
 @viewer_tool
-class PointSelect(CheckableTool):
+class PointSelect(IpyLeafletSelectionTool):
 
     icon = 'glue_crosshair'
     tool_id = 'ipyleaflet:pointselect'
@@ -67,22 +70,34 @@ class PointSelect(CheckableTool):
     def activate(self):
         """
         Capture point-select clicks. This is to select regions... 
+        
+        TODO:
+        Currently we have this operate only on the bottom layer
+        (bottom layer is easiest because subset layers get put on top)
+        
+        Currently the on_click function gets called twice on each
+        actual click. I need to figure out the click model. 
         """
         print("PointSelect activated...")
+        
+        
         def on_click(event, feature, **kwargs):
-            """On click should immediately add this to a subset.
-            The layer artist can then worry about the coloring.
-            
-            
-            
-            """
+            print("On click called...")
+            self.list_of_region_ids = []
             #print(feature)
             feature_id = feature['id'] #This is the name of features in our geodata
             #print(feature_id)
             # List of region_ids should start with the current subset (how to get this?)
-            self.list_of_region_ids.append(feature_id)
+            active_subset = self.viewer.toolbar_active_subset.selected
+            if active_subset:
+                print(f'activate_subset is: {active_subset}')
+                self.list_of_region_ids = list(self.viewer.session.data_collection.subset_groups[active_subset[0]].subsets[0].to_mask().nonzero()[0])
+            else:
+                print("No active_subset")
+                print(f'active_subset is: {active_subset}')
+            self.list_of_region_ids.append(int(feature_id))
             self.list_of_region_ids =  list(set(self.list_of_region_ids))
-            print(self.list_of_region_ids)
+            print(f"List of region ids to draw... {self.list_of_region_ids}")
             #import pdb; pdb.set_trace()
             try:
                 #inds = [key for key, val in enumerate(self.viewer.state.layers_data[0]['ids']) if val in self.list_of_region_ids]
@@ -111,8 +126,8 @@ class PointSelect(CheckableTool):
                 # We need to have centroid_lon and centroid_lat well defined...
                 final_subset_state = MultiOrState(subset_states)
                 self.viewer.apply_subset_state(final_subset_state, override_mode=None) #What does override_mode do?
-                print(int_inds)
-                print(final_subset_state)
+                print(f"Indices applied... {int_inds}")
+                #print(final_subset_state)
             except IncompatibleAttribute:
                 print("Got an IncompatibleAttribute")
             #print(inds)
@@ -120,11 +135,14 @@ class PointSelect(CheckableTool):
             #print(feature['id'])
         #Get current? layer geo_json object
         #print(self.viewer.layers[0])
-        for layer in self.viewer.layers: #Perhaps we do not want to do this for every layer, but only the top one? 
+        #layer_artist._click_callbacks = CallbackDispatcher() 
+        layer_artist = self.viewer.layers[0].layer_artist
+        layer_artist.on_click(on_click)
+        #for layer in self.viewer.layers: #Perhaps we do not want to do this for every layer, but only the top one? 
         #That could become confusing in the case where we have multiple non-overlapping layers...
-            print(f"Adding on_click to {layer}")
-            layer_artist = layer.layer_artist
-            layer_artist.on_click(on_click)
+        #    print(f"Adding on_click to {layer}")
+        #    layer_artist = layer.layer_artist
+        #    layer_artist.on_click(on_click)
 
     def deactivate(self):
         layer_artist = self.viewer.layers[0].layer_artist
@@ -136,12 +154,12 @@ class PointSelect(CheckableTool):
         pass
 
 @viewer_tool
-class RectangleSelect(CheckableTool):
+class RectangleSelect(IpyLeafletSelectionTool):
 
     icon = 'glue_square'
     tool_id = 'ipyleaflet:rectangleselect'
     action_text = 'Rectangular ROI'
-    tool_tip = 'Define a rectangular region of interest'
+    tool_tip = 'Hold down SHIFT and drag to define a rectangular region of interest'
     status_tip = 'Define a rectangular region of interest'
     shortcut = 'D'
 
@@ -153,21 +171,72 @@ class RectangleSelect(CheckableTool):
     def activate(self):
         """
         This gets the information we want, but we need to disable dragging and we need to 
-        draw a rectanle on the map. The DrawControl stuff in ipyleaflet does all this
+        draw a rectangle on the map. The DrawControl stuff in ipyleaflet does all this
         
         """
+        #self.viewer.mapfigure.dragging = False #This SHOULD work, but it does not
+        #https://github.com/jupyter-widgets/ipyleaflet/issues/711#issuecomment-704311279
+        #Until then, we have to hold down SHIFT
         def map_interaction(**kwargs):
+            #print(kwargs)
             if kwargs['type'] == 'mousedown':
                 print(f'mousedown {kwargs["coordinates"]}')
                 self.start_coords = kwargs['coordinates']
-            if kwargs['type'] == 'mouseup':
+                self.rect = Rectangle(bounds=(self.start_coords, kwargs['coordinates']),
+                                        weight=1, fill_opacity=0, dash_array= '5, 5', color='gray')
+                self.viewer.mapfigure.add_layer(self.rect)
+            elif kwargs['type'] == 'mouseup' and self.start_coords:
                 print(f'mouseup {kwargs["coordinates"]}')
                 self.end_coords = kwargs['coordinates']
+                
+                xmin = self.end_coords[1]
+                xmax = self.start_coords[1]
+                ymin = self.end_coords[0]
+                ymax = self.start_coords[0]
+                xmin, xmax = sorted((xmin, xmax))
+                ymin, ymax = sorted((ymin, ymax))
+                roi = RectangularROI(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+                subset_state = RoiSubsetState(xatt=self.viewer.state.lon_att,
+                                              yatt=self.viewer.state.lat_att,
+                                              roi=roi)
+                self.viewer.apply_subset_state(subset_state, override_mode=None)
+                
+                self.start_coords = None
+                time.sleep(0.1)
+                self.viewer.mapfigure.remove_layer(self.rect)
+            elif kwargs['type'] == 'mousemove' and self.start_coords:
+                new_rect = Rectangle(bounds=(self.start_coords, kwargs['coordinates']),
+                                        weight=1, fill_opacity=0.1, dash_array= '5, 5', color='gray', fill_color='gray')
+                # This is nice because it colors regions as we go, but it gets VERY slow with larger rectangles
+                # Need to heavily optimize or something.
+                
+                #self.end_coords = kwargs['coordinates']
+                #xmin = self.end_coords[1]
+                #xmax = self.start_coords[1]
+                #ymin = self.end_coords[0]
+                #ymax = self.start_coords[0]
+                #xmin, xmax = sorted((xmin, xmax))
+                #ymin, ymax = sorted((ymin, ymax))
+                
+                #roi = RectangularROI(xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax)
+                #subset_state = RoiSubsetState(xatt=self.viewer.state.lon_att,
+                #                              yatt=self.viewer.state.lat_att,
+                #                              roi=roi)
+                #This is slow IFF we cover a significant NUMBER of points
+                #Why? It is not the size of the region covered, and it does not seem to matter
+                #whether we have points or regions. 
+                #It is possible that 
+                #self.viewer.apply_subset_state(subset_state, override_mode=None) 
+                
+                self.viewer.mapfigure.substitute_layer(self.rect,new_rect) 
+                self.rect = new_rect
             #print(kwargs)
         self.viewer.mapfigure.on_interaction(map_interaction)
 
     def deactivate(self):
         self.viewer.mapfigure._interaction_callbacks = CallbackDispatcher()
+        #self.viewer.mapfigure.dragging = True
+        
         
     def close(self):
         pass
